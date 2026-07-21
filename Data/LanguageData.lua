@@ -1,0 +1,127 @@
+local AS = AscensionSilencer
+AS.Data = AS.Data or {}
+
+AS.Data.languages = {
+    Turkish = {
+        words = {
+            ["ve"] = 1, ["bir"] = 1, ["bu"] = 1, ["için"] = 2, ["icin"] = 2, ["ile"] = 1,
+            ["oyuncu"] = 2, ["oyuncular"] = 2, ["arıyoruz"] = 3, ["ariyoruz"] = 3, ["aranıyor"] = 3,
+            ["lazım"] = 2, ["lazim"] = 2, ["satılık"] = 3, ["satilik"] = 3, ["satıyorum"] = 3,
+            ["alıyorum"] = 3, ["alınır"] = 3, ["uygun"] = 2, ["fiyat"] = 2, ["merhaba"] = 2,
+            ["selam"] = 2, ["arkadaşlar"] = 2, ["gel"] = 1, ["katıl"] = 2, ["guildimize"] = 3,
+            ["loncamıza"] = 3, ["takım"] = 2, ["grup"] = 1, ["davet"] = 2, ["var mı"] = 2,
+        },
+        phrases = {
+            { "oyuncu arıyoruz", 4 }, { "oyuncu ariyoruz", 4 }, { "guildimize katıl", 4 },
+            { "guildimize katil", 4 }, { "tank lazım", 3 }, { "tank lazim", 3 },
+            { "uygun fiyat", 3 }, { "satılık dp", 4 }, { "satilik dp", 4 },
+        },
+        chars = { "ç", "ğ", "ı", "ö", "ş", "ü" },
+    },
+    SouthSlavic = {
+        label = "Balkan / South Slavic",
+        words = {
+            ["i"] = 1, ["je"] = 1, ["za"] = 1, ["se"] = 1, ["da"] = 1, ["na"] = 1,
+            ["smo"] = 2, ["sam"] = 1, ["ste"] = 2, ["ima"] = 1, ["treba"] = 2, ["tražimo"] = 3,
+            ["trazimo"] = 3, ["igrače"] = 3, ["igrace"] = 3, ["igrača"] = 3, ["igraca"] = 3,
+            ["pridruži"] = 3, ["pridruzi"] = 3, ["ceh"] = 2, ["gilda"] = 2, ["guilda"] = 2,
+            ["prodajem"] = 3, ["kupujem"] = 3, ["cijena"] = 2, ["cena"] = 2, ["pozdrav"] = 2,
+            ["ekipa"] = 2, ["ljudi"] = 2, ["večeras"] = 2, ["veceras"] = 2, ["može"] = 2, ["moze"] = 2,
+        },
+        phrases = {
+            { "tražimo igrače", 5 }, { "trazimo igrace", 5 }, { "pridruži se", 4 },
+            { "pridruzi se", 4 }, { "prodajem dp", 4 }, { "kupujem dp", 4 },
+        },
+        chars = { "č", "ć", "š", "ž", "đ" },
+    },
+    Slovenian = {
+        words = {
+            ["in"] = 1, ["za"] = 1, ["se"] = 1, ["smo"] = 2, ["iščemo"] = 3, ["iscemo"] = 3,
+            ["igralce"] = 3, ["igralci"] = 2, ["pridruži"] = 3, ["pridruzi"] = 3,
+            ["prodajam"] = 3, ["kupujem"] = 3, ["cena"] = 2, ["živjo"] = 2, ["zivjo"] = 2,
+        },
+        phrases = {
+            { "iščemo igralce", 5 }, { "iscemo igralce", 5 }, { "pridruži se", 4 }, { "pridruzi se", 4 },
+        },
+        chars = { "č", "š", "ž" },
+    },
+    Albanian = {
+        words = {
+            ["dhe"] = 2, ["per"] = 1, ["për"] = 2, ["nga"] = 1, ["me"] = 1, ["kemi"] = 2,
+            ["kerkojme"] = 3, ["kërkojmë"] = 3, ["lojtar"] = 2, ["lojtare"] = 3, ["lojtarë"] = 3,
+            ["bashkohu"] = 3, ["shes"] = 3, ["blej"] = 3, ["cmim"] = 2, ["çmim"] = 2,
+            ["pershendetje"] = 2, ["përshëndetje"] = 2,
+        },
+        phrases = {
+            { "kërkojmë lojtarë", 5 }, { "kerkojme lojtare", 5 }, { "bashkohu me", 4 },
+        },
+        chars = { "ë", "ç" },
+    },
+    Romanian = {
+        words = {
+            ["și"] = 2, ["si"] = 1, ["pentru"] = 2, ["cu"] = 1, ["sunt"] = 2, ["caut"] = 2,
+            ["căutăm"] = 3, ["cautam"] = 3, ["jucători"] = 3, ["jucatori"] = 3, ["alătură"] = 3,
+            ["alatura"] = 3, ["vând"] = 3, ["vand"] = 3, ["cumpăr"] = 3, ["cumpar"] = 3,
+            ["preț"] = 2, ["pret"] = 2, ["salut"] = 2, ["breaslă"] = 3, ["breasla"] = 3,
+        },
+        phrases = {
+            { "căutăm jucători", 5 }, { "cautam jucatori", 5 }, { "alătură te", 4 }, { "alatura te", 4 },
+        },
+        chars = { "ă", "â", "î", "ș", "ţ", "ț" },
+    },
+    Spanish = {
+        words = {
+            ["y"] = 1, ["para"] = 2, ["con"] = 1, ["que"] = 1, ["somos"] = 2, ["busco"] = 2,
+            ["buscamos"] = 3, ["jugadores"] = 3, ["unete"] = 3, ["únete"] = 3, ["vendo"] = 3,
+            ["compro"] = 3, ["precio"] = 2, ["hola"] = 2, ["gente"] = 2, ["necesito"] = 2,
+        },
+        phrases = {
+            { "buscamos jugadores", 5 }, { "únete a", 4 }, { "unete a", 4 }, { "vendo dp", 4 },
+        },
+        chars = { "ñ", "¿", "¡" },
+    },
+    Portuguese = {
+        words = {
+            ["e"] = 1, ["para"] = 1, ["com"] = 1, ["somos"] = 2, ["procuro"] = 2,
+            ["procuramos"] = 3, ["jogadores"] = 3, ["junte"] = 2, ["vendendo"] = 3,
+            ["compro"] = 3, ["preço"] = 2, ["preco"] = 2, ["olá"] = 2, ["ola"] = 1,
+        },
+        phrases = {
+            { "procuramos jogadores", 5 }, { "junte se", 4 }, { "vendendo dp", 4 },
+        },
+        chars = { "ã", "õ", "ç" },
+    },
+    French = {
+        words = {
+            ["et"] = 1, ["pour"] = 2, ["avec"] = 2, ["nous"] = 1, ["sommes"] = 2,
+            ["cherche"] = 2, ["cherchons"] = 3, ["joueurs"] = 3, ["rejoignez"] = 3,
+            ["vends"] = 3, ["achète"] = 3, ["achete"] = 3, ["prix"] = 2, ["bonjour"] = 2,
+        },
+        phrases = {
+            { "cherchons joueurs", 5 }, { "rejoignez nous", 4 }, { "vends dp", 4 },
+        },
+        chars = { "é", "è", "ê", "à", "ç" },
+    },
+    German = {
+        words = {
+            ["und"] = 2, ["für"] = 2, ["fur"] = 1, ["mit"] = 1, ["wir"] = 2, ["suchen"] = 3,
+            ["spieler"] = 3, ["beitreten"] = 3, ["verkaufe"] = 3, ["kaufe"] = 3,
+            ["preis"] = 2, ["hallo"] = 2, ["brauchen"] = 2, ["gilde"] = 3,
+        },
+        phrases = {
+            { "wir suchen", 4 }, { "suchen spieler", 5 }, { "verkaufe dp", 4 },
+        },
+        chars = { "ä", "ö", "ü", "ß" },
+    },
+    Italian = {
+        words = {
+            ["e"] = 1, ["per"] = 1, ["con"] = 1, ["siamo"] = 2, ["cerco"] = 2,
+            ["cerchiamo"] = 3, ["giocatori"] = 3, ["unisciti"] = 3, ["vendo"] = 3,
+            ["compro"] = 3, ["prezzo"] = 2, ["ciao"] = 2, ["gilda"] = 3,
+        },
+        phrases = {
+            { "cerchiamo giocatori", 5 }, { "unisciti a", 4 }, { "vendo dp", 4 },
+        },
+        chars = { "à", "è", "é", "ì", "ò", "ù" },
+    },
+}
