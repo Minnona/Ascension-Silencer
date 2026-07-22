@@ -118,11 +118,17 @@ AS.Data.languages = {
     French = {
         words = {
             ["et"] = 1, ["pour"] = 2, ["avec"] = 2, ["nous"] = 1, ["sommes"] = 2,
-            ["cherche"] = 2, ["cherchons"] = 3, ["joueurs"] = 3, ["rejoignez"] = 3,
+            ["cherche"] = 2, ["cherchons"] = 3, ["joueurs"] = 3, ["joueur"] = 3, ["rejoignez"] = 3,
+            ["recrute"] = 4, ["recrutons"] = 4, ["ouvert"] = 2, ["ouverte"] = 2,
+            ["tout"] = 1, ["type"] = 1, ["hordeux"] = 3,
             ["vends"] = 3, ["achète"] = 3, ["achete"] = 3, ["prix"] = 2, ["bonjour"] = 2,
         },
         phrases = {
             { "cherchons joueurs", 5 }, { "rejoignez nous", 4 }, { "vends dp", 4 },
+            { "recrute des", 4 }, { "recrutons des", 4 },
+            { "ouvert à tout type de joueur", 6 }, { "ouverte à tout type de joueur", 6 },
+            { "ouvert a tout type de joueur", 6 }, { "ouverte a tout type de joueur", 6 },
+            { "pour la horde", 4 },
         },
         chars = { "é", "è", "ê", "à", "ç" },
     },
