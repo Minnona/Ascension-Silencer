@@ -17,6 +17,8 @@ return {
     { message = "A Cruzada Escarlate está de portas abertas para você! Participe de raids, eventos de RP, batalhas de PvP e muito mais. Todos são bem-vindos, veteranos ou novatos. Venha fazer parte da nossa irmandade!", blocked = true, module = "NonEnglish" },
     { message = "GUILD MAS ESPAÑOLA QUE FRANCO WHISP NO LATAM NO PANCHO", blocked = true, module = "NonEnglish" },
     { message = "Si quieren GUILD LATAM FULL PVP susurrenme!!!", blocked = true, module = "NonEnglish" },
+    { message = "MYT GUILD HABLA HISPANA LATINA. ENFOCADA EN EL CONTENIDO PVE RECLUTAMOS GENTE PARA COMPLETAR EL CONTENIDO DE CLASSIC. AMBIENTE CHILL", blocked = true, module = "NonEnglish" },
+    { message = "hola gente", blocked = false },
     { message = "selam", blocked = false },
     { message = "LFM tank and healer for BRD", blocked = false },
 
