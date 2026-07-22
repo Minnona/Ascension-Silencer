@@ -69,6 +69,47 @@ AS.Data.languages = {
         },
         chars = { "ă", "â", "î", "ș", "ţ", "ț" },
     },
+    Polish = {
+        words = {
+            ["polska"] = 3, ["polski"] = 3, ["polskie"] = 3, ["gildia"] = 3,
+            ["która"] = 2, ["ktora"] = 2, ["stale"] = 1, ["się"] = 1, ["sie"] = 1,
+            ["rozrasta"] = 3, ["zaprasza"] = 3, ["wspólnej"] = 3, ["wspolnej"] = 3,
+            ["rozgrywki"] = 3, ["przyszłości"] = 3, ["przyszlosci"] = 3,
+            ["także"] = 2, ["takze"] = 2, ["które"] = 2, ["ktore"] = 2,
+            ["czekamy"] = 3, ["weekendowym"] = 3, ["gracz"] = 3, ["gracze"] = 3,
+            ["znajdzie"] = 3, ["miejsce"] = 2, ["ciebie"] = 2,
+        },
+        phrases = {
+            { "polska gildia", 6 }, { "polski gildia", 5 },
+            { "stale się rozrasta", 5 }, { "stale sie rozrasta", 5 },
+            { "zaprasza do wspólnej rozgrywki", 6 }, { "zaprasza do wspolnej rozgrywki", 6 },
+            { "w przyszłości także raidy", 5 }, { "w przyszlosci takze raidy", 5 },
+            { "znajdzie się u nas miejsce", 6 }, { "znajdzie sie u nas miejsce", 6 },
+            { "miejsce dla ciebie", 4 },
+        },
+        chars = { "ą", "ć", "ę", "ł", "ń", "ó", "ś", "ź", "ż" },
+    },
+    CzechSlovak = {
+        label = "Czech / Slovak",
+        words = {
+            ["guilda"] = 3, ["nabírá"] = 4, ["nabira"] = 4, ["nábor"] = 3, ["nabor"] = 3,
+            ["atmosféra"] = 2, ["atmosfera"] = 2, ["pohodová"] = 2, ["pohodova"] = 2,
+            ["parta"] = 2, ["nováčci"] = 3, ["novacci"] = 3, ["novácci"] = 3,
+            ["zkušení"] = 3, ["zkuseni"] = 3, ["hráči"] = 3, ["hraci"] = 3, ["hráci"] = 3,
+            ["vítáni"] = 3, ["vitani"] = 3, ["každý"] = 2, ["kazdy"] = 2,
+            ["místo"] = 2, ["misto"] = 2, ["přidej"] = 3, ["pridej"] = 3,
+        },
+        phrases = {
+            { "guilda nabírá", 6 }, { "guilda nabira", 6 },
+            { "chill atmosféra", 4 }, { "chill atmosfera", 4 },
+            { "pohodová parta", 4 }, { "pohodova parta", 4 },
+            { "nováčci i zkušení hráči vítáni", 8 }, { "novacci i zkuseni hraci vitani", 8 },
+            { "novácci i zkušení hráci vítáni", 8 },
+            { "každý má místo", 5 }, { "kazdy ma misto", 5 },
+            { "whisper pro invite", 4 },
+        },
+        chars = { "á", "ä", "č", "ď", "é", "ě", "í", "ĺ", "ľ", "ň", "ó", "ô", "ŕ", "ř", "š", "ť", "ú", "ů", "ý", "ž" },
+    },
     Spanish = {
         words = {
             ["y"] = 1, ["para"] = 2, ["con"] = 1, ["que"] = 1, ["somos"] = 2, ["busco"] = 2,
@@ -135,11 +176,16 @@ AS.Data.languages = {
     German = {
         words = {
             ["und"] = 2, ["für"] = 2, ["fur"] = 1, ["mit"] = 1, ["wir"] = 2, ["suchen"] = 3,
-            ["spieler"] = 3, ["beitreten"] = 3, ["verkaufe"] = 3, ["kaufe"] = 3,
+            ["sucht"] = 4, ["spieler"] = 3, ["beitreten"] = 3, ["verkaufe"] = 3, ["kaufe"] = 3,
             ["preis"] = 2, ["hallo"] = 2, ["brauchen"] = 2, ["gilde"] = 3,
+            ["auf"] = 1, ["starke"] = 2, ["starken"] = 2, ["langfristige"] = 3,
+            ["langfristigen"] = 3, ["anspruch"] = 3, ["oder"] = 1, ["erfolge"] = 2,
         },
         phrases = {
             { "wir suchen", 4 }, { "suchen spieler", 5 }, { "verkaufe dp", 4 },
+            { "gilde sucht", 5 }, { "sucht starke", 5 }, { "sucht starken", 5 },
+            { "langfristige spieler", 5 }, { "langfristigen spieler", 5 },
+            { "spieler mit anspruch", 5 }, { "first kills auf", 4 },
         },
         chars = { "ä", "ö", "ü", "ß" },
     },
