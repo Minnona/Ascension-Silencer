@@ -12,9 +12,15 @@ AS.moduleOrder = {}
 AS.ready = false
 AS.chatFiltersRegistered = false
 AS.cache = {
+    player = "",
     friends = {},
     guild = {},
     group = {},
+}
+AS.exceptionCache = {
+    players = {},
+    phrases = {},
+    hasPhrases = false,
 }
 AS.sessionStats = {
     total = 0,
@@ -47,6 +53,7 @@ function AS:RegisterModule(key, module)
     module.key = key
     self.modules[key] = module
     table.insert(self.moduleOrder, key)
+    self.filterEvaluationOrder = nil
 end
 
 function AS:GetModuleDB(key)
@@ -58,13 +65,20 @@ end
 
 function AS:IsModuleEnabled(key)
     local moduleDB = self:GetModuleDB(key)
-    return moduleDB and moduleDB.enabled and true or false
+    local module = self.modules[key]
+    return moduleDB and moduleDB.enabled and module and not module.runtimeDisabled and true or false
 end
 
 function AS:SetModuleEnabled(key, enabled)
     local moduleDB = self:GetModuleDB(key)
+    local module = self.modules[key]
     if not moduleDB then return end
+
     moduleDB.enabled = enabled and true or false
+    if enabled and module then
+        module.runtimeDisabled = false
+        module.reportedError = false
+    end
     self:RefreshOptions()
 end
 
@@ -72,6 +86,35 @@ function AS:SetMasterEnabled(enabled)
     if not self.db then return end
     self.db.enabled = enabled and true or false
     self:RefreshOptions()
+end
+
+function AS:RefreshPlayerCache()
+    local name = UnitName and UnitName("player")
+    self.cache.player = name and self:CanonicalName(name) or ""
+end
+
+function AS:RebuildExceptionCache()
+    local cache = {
+        players = {},
+        phrases = {},
+        hasPhrases = false,
+    }
+
+    local exceptions = self.db and self.db.exceptions or {}
+    for _, name in ipairs(exceptions.players or {}) do
+        local key = self:CanonicalName(name)
+        if key ~= "" then cache.players[key] = true end
+    end
+
+    for _, phrase in ipairs(exceptions.phrases or {}) do
+        phrase = string.lower(self:Trim(phrase))
+        if phrase ~= "" then
+            table.insert(cache.phrases, phrase)
+            cache.hasPhrases = true
+        end
+    end
+
+    self.exceptionCache = cache
 end
 
 function AS:RefreshFriendCache()
@@ -86,19 +129,36 @@ function AS:RefreshFriendCache()
     end
 end
 
-function AS:RefreshGuildCache()
+function AS:RebuildGuildCache()
     self.cache.guild = {}
     if not IsInGuild or not IsInGuild() then return end
-    if GuildRoster then pcall(GuildRoster) end
     if not GetNumGuildMembers or not GetGuildRosterInfo then return end
 
-    local count = GetNumGuildMembers(true) or 0
+    local now = GetTime and GetTime() or 0
+    if self.lastGuildCacheRefresh and (now - self.lastGuildCacheRefresh) < 0.20 then return end
+    self.lastGuildCacheRefresh = now
+
+    -- Only online guild members can send chat messages, so offline roster entries
+    -- are unnecessary for the sender exception cache.
+    local count = GetNumGuildMembers(false) or 0
     for index = 1, count do
         local name = GetGuildRosterInfo(index)
         if name then
             self.cache.guild[self:CanonicalName(name)] = true
         end
     end
+end
+
+function AS:RequestGuildRoster(force)
+    if not IsInGuild or not IsInGuild() or not GuildRoster then
+        self.cache.guild = {}
+        return
+    end
+
+    local now = GetTime and GetTime() or 0
+    if not force and self.lastGuildRosterRequest and (now - self.lastGuildRosterRequest) < 5 then return end
+    self.lastGuildRosterRequest = now
+    pcall(GuildRoster)
 end
 
 function AS:RefreshGroupCache()
@@ -125,8 +185,9 @@ function AS:RefreshGroupCache()
 end
 
 function AS:RefreshSocialCaches()
+    self:RefreshPlayerCache()
     self:RefreshFriendCache()
-    self:RefreshGuildCache()
+    self:RebuildGuildCache()
     self:RefreshGroupCache()
 end
 
@@ -145,16 +206,13 @@ function AS:IsChannelEnabled(event)
     return false
 end
 
-function AS:IsSenderExcepted(sender, message)
+function AS:IsSenderExcepted(sender, message, senderKey)
     if not self.db then return false end
     local exceptions = self.db.exceptions or {}
-    local senderKey = self:CanonicalName(sender)
+    senderKey = senderKey or self:CanonicalName(sender)
 
-    if exceptions.allowSelf ~= false and UnitName then
-        local playerName = UnitName("player")
-        if playerName and senderKey == self:CanonicalName(playerName) then
-            return true, "own message"
-        end
+    if exceptions.allowSelf ~= false and senderKey ~= "" and senderKey == self.cache.player then
+        return true, "own message"
     end
 
     if exceptions.allowFriends ~= false and self.cache.friends[senderKey] then
@@ -169,19 +227,17 @@ function AS:IsSenderExcepted(sender, message)
         return true, "group member"
     end
 
-    local players = exceptions.players or {}
-    for _, name in ipairs(players) do
-        if senderKey == self:CanonicalName(name) then
-            return true, "player whitelist"
-        end
+    local compiled = self.exceptionCache or {}
+    if compiled.players and compiled.players[senderKey] then
+        return true, "player whitelist"
     end
 
-    local lowerMessage = string.lower(tostring(message or ""))
-    local phrases = exceptions.phrases or {}
-    for _, phrase in ipairs(phrases) do
-        phrase = string.lower(self:Trim(phrase))
-        if phrase ~= "" and string.find(lowerMessage, phrase, 1, true) then
-            return true, "phrase whitelist"
+    if compiled.hasPhrases then
+        local lowerMessage = string.lower(tostring(message or ""))
+        for _, phrase in ipairs(compiled.phrases or {}) do
+            if string.find(lowerMessage, phrase, 1, true) then
+                return true, "phrase whitelist"
+            end
         end
     end
 
@@ -206,11 +262,7 @@ function AS:ChatFilter(frame, event, message, sender, ...)
     end
 
     local blocked = self:EvaluateChatMessage(message, sender, event, ...)
-    if blocked then
-        return true
-    end
-
-    return false
+    return blocked and true or false
 end
 
 function AS:RegisterChatFilters()
@@ -230,7 +282,8 @@ function AS:Initialize()
     if self.ready then return end
 
     self:InitDatabase()
-    self:RefreshSocialCaches()
+    self:RefreshPlayerCache()
+    self:RebuildExceptionCache()
     self:RegisterChatFilters()
     self:BuildOptions()
     self.ready = true
@@ -246,11 +299,20 @@ AS:SetScript("OnEvent", function(self, event, ...)
         end
     elseif event == "PLAYER_LOGIN" then
         self:RefreshSocialCaches()
+        self:RebuildExceptionCache()
+        self:RequestGuildRoster(true)
         if self.ApplyOptionsSkin then self:ApplyOptionsSkin() end
     elseif event == "FRIENDLIST_UPDATE" then
         self:RefreshFriendCache()
     elseif event == "GUILD_ROSTER_UPDATE" then
-        self:RefreshGuildCache()
+        -- Read the roster only. Requesting it from this event creates a feedback loop.
+        self:RebuildGuildCache()
+    elseif event == "PLAYER_GUILD_UPDATE" then
+        local unit = ...
+        if not unit or unit == "player" then
+            self:RebuildGuildCache()
+            self:RequestGuildRoster(true)
+        end
     elseif event == "GROUP_ROSTER_UPDATE" or event == "RAID_ROSTER_UPDATE" or event == "PARTY_MEMBERS_CHANGED" then
         self:RefreshGroupCache()
     end
@@ -263,6 +325,7 @@ AS:RegisterEvent("GUILD_ROSTER_UPDATE")
 AS:RegisterEvent("RAID_ROSTER_UPDATE")
 AS:RegisterEvent("PARTY_MEMBERS_CHANGED")
 pcall(AS.RegisterEvent, AS, "GROUP_ROSTER_UPDATE")
+pcall(AS.RegisterEvent, AS, "PLAYER_GUILD_UPDATE")
 
 SLASH_ASCENSIONSILENCER1 = "/as"
 SlashCmdList["ASCENSIONSILENCER"] = function()
