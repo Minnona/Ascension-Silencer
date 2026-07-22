@@ -13,18 +13,24 @@ local module = {
 
 local RECRUIT_PHRASES = {
     "recruiting", "recruitment", "now recruiting", "is recruiting", "are recruiting",
+    -- Common chat misspellings. Keep these explicit instead of using fuzzy matching
+    -- in the live chat path.
+    "recruting", "recruitng", "recuiting", "recrutiting",
 }
 
 local MEMBER_SEARCH_PHRASES = {
     "looking for more members", "looking for members", "seeking more members", "seeking members",
     "searching for more members", "searching for members", "welcoming new members",
     "looking for more social", "looking for social players", "social adds", "social recruits",
+    "seeking players", "seeking active players", "looking for players", "searching for players",
 }
 
 local JOIN_PHRASES = {
     "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite",
     "come be part", "come be a part", "be part of the journey", "become part of",
     "come chill with", "come hang with", "come hangout", "come hang out", "come play with",
+    "whisper for an invite", "whisper for info", "whisper for more info",
+    "whisper for more info or an invite", "pm for more info or an invite",
 }
 
 local GUILD_TERMS = { "guild", "community", "family" }
@@ -39,6 +45,8 @@ local ACTIVITY_PHRASES = {
     "share the experience", "make some new homies",
     "newly formed guild", "eu based guild", "chill community", "community of players",
     "explore end game content", "explore endgame content", "dungeons and raids",
+    "end game raids", "endgame raids", "structured pvp",
+    "active leadership", "experienced leadership", "mature leadership",
 }
 
 local PROMOTION_PHRASES = {
@@ -47,6 +55,7 @@ local PROMOTION_PHRASES = {
     "veterans welcome", "veterans alike are welcome", "all experience levels", "players of all experience",
     "active discord", "active discord and chat", "active chat", "leave the drama", "no drama",
     "highly encouraged", "dwarves highly encouraged", "pm for more info", "whisper for more info",
+    "more info or an invite", "info or an invite",
 }
 
 local function AddMatch(matches, label)
@@ -118,6 +127,10 @@ function module:Evaluate(context)
     end
 
     if string.find(text, "?", 1, true) and not recruit then
+        score = score - 2
+    elseif string.find(text, "?", 1, true)
+        and (string.find(text, "is ", 1, true) or string.find(text, "any ", 1, true)) then
+        -- Questions about a guild recruiting are not advertisements.
         score = score - 2
     end
 
