@@ -1,6 +1,6 @@
 local AS = AscensionSilencer
 
-AS.version = "0.2.3"
+AS.version = "0.3.0"
 AS.schemaVersion = 2
 AS.hygieneHistory = AS.hygieneHistory or {}
 AS.hygieneMessageCounter = 0
@@ -163,13 +163,8 @@ function AS:IsCommercialMessage(context)
         or string.find(text .. " ", "%d+%s*[kmg]%s*g%s")
         or string.find(text, "%d+%s*[:/]%s*%d+")
 
-    if hasItemLink and hasPrice then
-        return true, "item and price"
-    end
-
-    if naturalToken and (hasItemLink or hasPrice or hasContact) then
-        return true, naturalToken
-    end
+    if hasItemLink and hasPrice then return true, "item and price" end
+    if naturalToken and (hasItemLink or hasPrice or hasContact) then return true, naturalToken end
 
     if string.find(text, "^selling ") or string.find(text, "^buying ")
         or string.find(text, "^sell ") or string.find(text, "^buy ") then
@@ -197,6 +192,13 @@ function AS:EvaluateChannelHygiene(context)
     local settings = self.db and self.db.hygiene
     if not settings or settings.enabled == false then return nil end
 
+    local now = GetTime and GetTime() or 0
+    self.hygieneMessageCounter = (self.hygieneMessageCounter or 0) + 1
+    if self.hygieneMessageCounter >= GLOBAL_PRUNE_INTERVAL then
+        self.hygieneMessageCounter = 0
+        self:PruneHygieneHistory(now, settings)
+    end
+
     local isTrade = self:IsTradeChannel(context, settings)
     local isCommercial, commercialMatch = self:IsCommercialMessage(context)
 
@@ -210,13 +212,6 @@ function AS:EvaluateChannelHygiene(context)
 
     local signature = self:GetHygieneSignature(context)
     if not signature then return nil end
-
-    local now = GetTime and GetTime() or 0
-    self.hygieneMessageCounter = (self.hygieneMessageCounter or 0) + 1
-    if self.hygieneMessageCounter >= GLOBAL_PRUNE_INTERVAL then
-        self.hygieneMessageCounter = 0
-        self:PruneHygieneHistory(now, settings)
-    end
 
     local senderKey = context.senderKey or self:CanonicalName(context.sender or "Unknown")
     local senderRecord = self.hygieneHistory[senderKey]
