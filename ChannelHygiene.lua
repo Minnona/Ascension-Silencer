@@ -94,7 +94,7 @@ end
 
 function AS:PruneHygieneHistory(now, settings)
     local maxAge = GetMaximumAge(settings)
-    local senderCount = 0
+    local activeSenders = {}
 
     for senderKey, senderRecord in pairs(self.hygieneHistory) do
         local signatureCount = PruneSenderSignatures(senderRecord, now, maxAge)
@@ -102,23 +102,19 @@ function AS:PruneHygieneHistory(now, settings)
         if signatureCount == 0 and (now - lastSeen) > maxAge then
             self.hygieneHistory[senderKey] = nil
         else
-            senderCount = senderCount + 1
+            activeSenders[#activeSenders + 1] = { senderKey, lastSeen }
         end
     end
 
-    while senderCount > MAX_SENDERS do
-        local oldestSender = nil
-        local oldestTime = nil
-        for senderKey, senderRecord in pairs(self.hygieneHistory) do
-            local lastSeen = tonumber(senderRecord.lastSeen) or 0
-            if not oldestTime or lastSeen < oldestTime then
-                oldestSender = senderKey
-                oldestTime = lastSeen
-            end
-        end
-        if not oldestSender then break end
-        self.hygieneHistory[oldestSender] = nil
-        senderCount = senderCount - 1
+    local excess = #activeSenders - MAX_SENDERS
+    if excess <= 0 then return end
+
+    table.sort(activeSenders, function(left, right)
+        return left[2] < right[2]
+    end)
+
+    for index = 1, excess do
+        self.hygieneHistory[activeSenders[index][1]] = nil
     end
 end
 
