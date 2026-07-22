@@ -13,24 +13,52 @@ function AS:GetModuleThreshold(module, moduleDB)
     return base
 end
 
-function AS:EvaluateContext(context)
-    local bestResult = nil
-    local evaluations = {}
+function AS:GetFilterEvaluationOrder()
+    if self.filterEvaluationOrder then return self.filterEvaluationOrder end
 
-    for _, key in ipairs(self.moduleOrder) do
+    local order = {}
+    for index, key in ipairs(self.moduleOrder) do
+        local module = self.modules[key]
+        order[#order + 1] = {
+            key = key,
+            index = index,
+            priority = tonumber(module and module.priority) or 0,
+        }
+    end
+
+    table.sort(order, function(left, right)
+        if left.priority == right.priority then return left.index < right.index end
+        return left.priority > right.priority
+    end)
+
+    self.filterEvaluationOrder = order
+    return order
+end
+
+function AS:EvaluateContext(context, collectEvaluations)
+    local bestResult = nil
+    local evaluations = collectEvaluations and {} or nil
+
+    for _, ordered in ipairs(self:GetFilterEvaluationOrder()) do
+        local key = ordered.key
         local module = self.modules[key]
         local moduleDB = self:GetModuleDB(key)
 
-        if module and moduleDB and moduleDB.enabled and module.Evaluate then
+        if bestResult and not collectEvaluations and ordered.priority < (bestResult.priority or 0) then
+            break
+        end
+
+        if module and not module.runtimeDisabled and moduleDB and moduleDB.enabled and module.Evaluate then
             local ok, result = pcall(module.Evaluate, module, context, moduleDB, self)
             if ok and type(result) == "table" then
                 result.moduleKey = key
                 result.moduleName = module.name or key
                 result.score = tonumber(result.score) or 0
                 result.threshold = self:GetModuleThreshold(module, moduleDB)
-                result.priority = tonumber(module.priority) or 0
+                result.priority = ordered.priority
                 result.blocked = result.score >= result.threshold
-                table.insert(evaluations, result)
+
+                if evaluations then evaluations[#evaluations + 1] = result end
 
                 if result.blocked then
                     local margin = result.score - result.threshold
@@ -42,66 +70,95 @@ function AS:EvaluateContext(context)
                         bestResult = result
                     end
                 end
-            elseif not ok and not module.reportedError then
-                module.reportedError = true
-                self:Print((module.name or key) .. " filter error: " .. tostring(result))
+            elseif not ok then
+                module.runtimeDisabled = true
+                if not module.reportedError then
+                    module.reportedError = true
+                    self:Print((module.name or key) .. " filter disabled after error: " .. tostring(result))
+                end
             end
         end
     end
 
-    context.evaluations = evaluations
+    if collectEvaluations then context.evaluations = evaluations end
     return bestResult, evaluations
 end
 
+local function MakeMessageCacheKey(event, message, sender, channelIndex, lineID)
+    local numericLineID = tonumber(lineID)
+    if numericLineID and numericLineID > 0 then
+        return tostring(event) .. "\031line\031" .. tostring(numericLineID), 2
+    end
+
+    return tostring(event)
+        .. "\031" .. tostring(sender)
+        .. "\031" .. tostring(channelIndex)
+        .. "\031" .. tostring(message), 0.10
+end
+
 function AS:EvaluateChatMessage(message, sender, event, ...)
-    local excepted = self:IsSenderExcepted(sender, message)
-    if excepted then return false end
+    local channelIndex = select(6, ...)
+    local channelBaseName = select(7, ...)
+    local lineID = select(9, ...)
+    local now = GetTime and GetTime() or 0
+    local cacheKey, cacheLifetime = MakeMessageCacheKey(event, message, sender, channelIndex, lineID)
+    local cached = self.lastMessageEvaluation
+
+    if cached and cached.key == cacheKey and (now - cached.time) < cacheLifetime then
+        return cached.blocked, cached.result
+    end
+
+    local function Finish(blocked, result)
+        self.lastMessageEvaluation = {
+            key = cacheKey,
+            time = now,
+            blocked = blocked and true or false,
+            result = result,
+        }
+        return blocked and true or false, result
+    end
+
+    local senderKey = self:CanonicalName(sender)
+    local excepted = self:IsSenderExcepted(sender, message, senderKey)
+    if excepted then return Finish(false, nil) end
 
     local context = self:NormalizeMessage(message)
     context.sender = sender or "Unknown"
+    context.senderKey = senderKey
     context.event = event
     context.channel = self:GetChannelLabel(event, ...)
-
-    local channelIndex = select(6, ...)
-    local channelBaseName = select(7, ...)
     context.channelIndex = tonumber(channelIndex)
     context.channelBaseName = channelBaseName
+    context.lineID = lineID
 
-    local result = self:EvaluateContext(context)
+    local result = self:EvaluateContext(context, false)
     if not result and self.EvaluateChannelHygiene then
         result = self:EvaluateChannelHygiene(context)
     end
-    if not result then return false end
+    if not result then return Finish(false, nil) end
 
-    local now = GetTime and GetTime() or 0
-    local blockKey = tostring(event) .. "\031" .. tostring(sender) .. "\031" .. tostring(message)
-    local isDuplicate = self.lastBlockedKey == blockKey and (now - (self.lastBlockedTime or 0)) < 0.5
+    self:AddBlockedMessage({
+        channel = context.channel,
+        sender = context.sender,
+        message = context.original,
+        moduleKey = result.moduleKey,
+        moduleName = result.moduleName,
+        reason = result.reason or result.moduleName,
+        score = result.score,
+        threshold = result.threshold,
+        matches = result.matches or {},
+    })
 
-    if not isDuplicate then
-        self.lastBlockedKey = blockKey
-        self.lastBlockedTime = now
-        self:AddBlockedMessage({
-            channel = context.channel,
-            sender = context.sender,
-            message = context.original,
-            moduleKey = result.moduleKey,
-            moduleName = result.moduleName,
-            reason = result.reason or result.moduleName,
-            score = result.score,
-            threshold = result.threshold,
-            matches = result.matches or {},
-        })
-    end
-
-    return true, result
+    return Finish(true, result)
 end
 
 function AS:TestMessage(message)
     local context = self:NormalizeMessage(message)
     context.sender = "Test"
+    context.senderKey = "test"
     context.event = "TEST"
     context.channel = "Test"
 
-    local result, evaluations = self:EvaluateContext(context)
+    local result, evaluations = self:EvaluateContext(context, true)
     return result, evaluations
 end
