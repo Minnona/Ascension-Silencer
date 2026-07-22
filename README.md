@@ -6,8 +6,6 @@ Ascension Silencer is a configurable chat filter for Project Ascension.
 
 [**Download the latest AscensionSilencer.zip**](https://github.com/Minnona/Ascension-Silencer/releases/latest/download/AscensionSilencer.zip)
 
-The release ZIP already contains the correctly named `AscensionSilencer` folder. Do not download GitHub's automatically generated **Source code** archives.
-
 It can filter:
 
 - Guild recruitment advertisements
@@ -74,7 +72,6 @@ The final folder should be:
 ```
 
 Use the location of your own AscensionWoW folder if it is installed elsewhere.
-
 
 ## License
 
