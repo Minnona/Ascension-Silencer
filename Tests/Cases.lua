@@ -23,12 +23,15 @@ return {
     { message = "[Styx] Polska gildia, ktora stale sie rozrasta, zaprasza do wspolnej rozgrywki! Leveling, dungi, BG, a w przyszlosci takze raidy, na ktore bardzo czekamy. Tryhard, newbie czy weekendowym gracz? znajdzie sie u nas miejsce dla Ciebie.", blocked = true, module = "NonEnglish" },
     { message = "<Kulový blesk> CZ/SK guilda nabírá! Raidy, dungeony, chill atmosféra a pohodová parta. Novácci i zkušení hráci vítáni — každý má místo! Whisper pro invite/info.", blocked = true, module = "NonEnglish" },
     { message = "<cleanse> Multiple First Kills auf BB sucht starke, langfristige Spieler mit Anspruch! Discord: https://discord.gg/fqYRPnfjxW oder /w me", blocked = true, module = "NonEnglish" },
+    { message = "<EXCEED {DE}> DEUTSCHE RAIDGILDE sucht Raidmember für den kommenden Ascended Content. Alle Raids auf Bronzebeard in Ascended Clear. Meldet euch wenn ihr bock auf entspanntes aber erfolgreiches Raiden habt. Auch Ascension Newcommer willkommen", blocked = true, module = "NonEnglish" },
     { message = "hola gente", blocked = false },
     { message = "bonjour", blocked = false },
     { message = "selam", blocked = false },
     { message = "Polska", blocked = false },
     { message = "sucht", blocked = false },
     { message = "CZ/SK", blocked = false },
+    { message = "Raidmember", blocked = false },
+    { message = "Willkommen", blocked = false },
     { message = "LFM tank and healer for BRD", blocked = false },
 
     -- Channel Hygiene scenarios require channel/sender state in the test harness.
