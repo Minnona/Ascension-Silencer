@@ -8,6 +8,7 @@ return {
     { message = "WTS 500 DP, good rate, whisper me", blocked = true, module = "CurrencySpam" },
     { message = "WTB |cffffffff|Hitem:975001:0:0:0:0:0:0:0|h[Bazaar Token]|h|r 45s each whisper me", blocked = true, module = "CurrencySpam" },
     { message = "WTS 100DP + 1000 Bazaar for 2200g", blocked = true, module = "CurrencySpam" },
+    { message = "wtb 2800 baz tokens", blocked = true, module = "CurrencySpam" },
     { message = "Did they change the DP store?", blocked = false },
     { message = "LIVE NOW twitch.tv/example come hang out", blocked = true, module = "StreamAdvertising" },
     { message = "Did you watch that Twitch streamer yesterday?", blocked = false },
