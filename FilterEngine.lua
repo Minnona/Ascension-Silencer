@@ -96,6 +96,16 @@ local function MakeMessageCacheKey(event, message, sender, channelIndex, lineID)
         .. "\031" .. tostring(message), 0.10
 end
 
+local function FinishMessageEvaluation(addon, cacheKey, now, blocked, result)
+    addon.lastMessageEvaluation = {
+        key = cacheKey,
+        time = now,
+        blocked = blocked and true or false,
+        result = result,
+    }
+    return blocked and true or false, result
+end
+
 function AS:EvaluateChatMessage(message, sender, event, ...)
     local channelIndex = select(6, ...)
     local channelBaseName = select(7, ...)
@@ -108,19 +118,9 @@ function AS:EvaluateChatMessage(message, sender, event, ...)
         return cached.blocked, cached.result
     end
 
-    local function Finish(blocked, result)
-        self.lastMessageEvaluation = {
-            key = cacheKey,
-            time = now,
-            blocked = blocked and true or false,
-            result = result,
-        }
-        return blocked and true or false, result
-    end
-
     local senderKey = self:CanonicalName(sender)
     local excepted = self:IsSenderExcepted(sender, message, senderKey)
-    if excepted then return Finish(false, nil) end
+    if excepted then return FinishMessageEvaluation(self, cacheKey, now, false, nil) end
 
     local context = self:NormalizeMessage(message)
     context.sender = sender or "Unknown"
@@ -135,7 +135,7 @@ function AS:EvaluateChatMessage(message, sender, event, ...)
     if not result and self.EvaluateChannelHygiene then
         result = self:EvaluateChannelHygiene(context)
     end
-    if not result then return Finish(false, nil) end
+    if not result then return FinishMessageEvaluation(self, cacheKey, now, false, nil) end
 
     self:AddBlockedMessage({
         channel = context.channel,
@@ -149,7 +149,7 @@ function AS:EvaluateChatMessage(message, sender, event, ...)
         matches = result.matches or {},
     })
 
-    return Finish(true, result)
+    return FinishMessageEvaluation(self, cacheKey, now, true, result)
 end
 
 function AS:TestMessage(message)
