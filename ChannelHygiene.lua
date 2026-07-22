@@ -11,15 +11,13 @@ local COMMERCIAL_TOKENS = {
     wts = true, wtb = true, wtt = true,
     sell = true, selling = true, sold = true,
     buy = true, buying = true,
-    trade = true, trading = true,
-    craft = true, crafting = true, crafter = true,
-    enchant = true, enchanting = true, enchanter = true,
 }
 
 local COMMERCIAL_PHRASES = {
     "want to sell", "want to buy", "for sale", "paying gold",
     "selling for", "buying for", "can craft", "crafting for tips",
     "looking for crafter", "looking for enchanter", "lf crafter", "lf enchanter",
+    "offering crafting", "offering enchants", "crafting services", "enchanting services",
     "tips appreciated", "your mats", "my mats",
 }
 
@@ -54,7 +52,9 @@ function AS:IsTradeChannel(context, settings)
         return true
     end
 
-    local channelName = string.lower(tostring(context.channelBaseName or context.channel or ""))
+    local channelName = context.channelBaseName
+    if type(channelName) ~= "string" or channelName == "" then channelName = context.channel end
+    channelName = string.lower(tostring(channelName or ""))
     return string.find(channelName, "trade", 1, true)
         or string.find(channelName, "commerce", 1, true)
         or string.find(channelName, "auction", 1, true)
@@ -141,19 +141,33 @@ function AS:EvaluateChannelHygiene(context)
     local settings = self.db and self.db.hygiene
     if not settings or settings.enabled == false then return nil end
 
+    local now = GetTime and GetTime() or 0
+    local eventKey = tostring(context.sender) .. "\031" .. tostring(context.channel) .. "\031" .. tostring(context.original)
+    if self.lastHygieneEventKey == eventKey and (now - (self.lastHygieneEventTime or 0)) < 0.25 then
+        if self.lastHygieneEventResult == false then return nil end
+        return self.lastHygieneEventResult
+    end
+
+    local function Finish(result)
+        self.lastHygieneEventKey = eventKey
+        self.lastHygieneEventTime = now
+        self.lastHygieneEventResult = result or false
+        return result
+    end
+
     local isTrade = self:IsTradeChannel(context, settings)
     local isCommercial, commercialMatch = self:IsCommercialMessage(context)
 
     if settings.routeCommercial ~= false and isCommercial and not isTrade then
-        return MakeResult("Commercial post outside Trade", { commercialMatch or "commercial content" })
+        return Finish(MakeResult("Commercial post outside Trade", { commercialMatch or "commercial content" }))
     end
 
     if settings.keepTradeClean ~= false and isTrade and not isCommercial then
-        return MakeResult("Non-trade content posted in Trade", { "Trade channel routing" })
+        return Finish(MakeResult("Non-trade content posted in Trade", { "Trade channel routing" }))
     end
 
     local signature = self:GetHygieneSignature(context)
-    if not signature then return nil end
+    if not signature then return Finish(nil) end
 
     local senderKey = self:CanonicalName(context.sender or "Unknown")
     self.hygieneHistory = self.hygieneHistory or {}
@@ -163,7 +177,6 @@ function AS:EvaluateChannelHygiene(context)
         self.hygieneHistory[senderKey] = senderHistory
     end
 
-    local now = GetTime and GetTime() or 0
     self:PruneHygieneHistory(senderHistory, now, settings)
 
     local previous = senderHistory[signature]
@@ -174,9 +187,9 @@ function AS:EvaluateChannelHygiene(context)
         if settings.suppressCrossChannel ~= false
             and previous.channel ~= context.channel
             and elapsed < duplicateWindow then
-            return MakeResult("Duplicate of message in " .. tostring(previous.channel or "another channel"), {
+            return Finish(MakeResult("Duplicate of message in " .. tostring(previous.channel or "another channel"), {
                 "cross-channel duplicate",
-            })
+            }))
         end
 
         if settings.throttleRepeats ~= false then
@@ -186,9 +199,9 @@ function AS:EvaluateChannelHygiene(context)
 
             if elapsed < cooldown then
                 local remaining = math.max(1, math.ceil(cooldown - elapsed))
-                return MakeResult("Repeated message throttled (" .. remaining .. "s remaining)", {
+                return Finish(MakeResult("Repeated message throttled (" .. remaining .. "s remaining)", {
                     "repeat cooldown",
-                })
+                }))
             end
         end
     end
@@ -199,5 +212,5 @@ function AS:EvaluateChannelHygiene(context)
         trade = isTrade and true or false,
     }
 
-    return nil
+    return Finish(nil)
 end
