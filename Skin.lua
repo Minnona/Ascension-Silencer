@@ -1,6 +1,7 @@
 local AS = AscensionSilencer
 
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8x8"
+local CHECK_TEXTURE = "Interface\\Buttons\\UI-CheckBox-Check"
 
 local function ReadColor(value, fallbackR, fallbackG, fallbackB, fallbackA)
     if type(value) == "table" then
@@ -26,6 +27,12 @@ local function HideTexture(texture)
     if not texture then return end
     if texture.SetTexture then texture:SetTexture(nil) end
     if texture.Hide then texture:Hide() end
+end
+
+local function RaiseTexture(texture, subLevel)
+    if texture and texture.SetDrawLayer then
+        texture:SetDrawLayer("OVERLAY", subLevel or 7)
+    end
 end
 
 function AS:GetElvUIEngine()
@@ -133,6 +140,27 @@ function AS:SkinCheckBox(checkBox)
         TryMethod(skins, "HandleCheckBox", checkBox)
         checkBox.asElvUISkinned = true
     end
+
+    -- ElvUI 7 can leave checked textures below a scroll child or card backdrop.
+    -- Keep the interactive frame and all state textures above their parent layer.
+    local parent = checkBox.GetParent and checkBox:GetParent()
+    if parent and parent.GetFrameLevel and checkBox.GetFrameLevel and checkBox.SetFrameLevel then
+        local minimumLevel = (parent:GetFrameLevel() or 0) + 2
+        if (checkBox:GetFrameLevel() or 0) < minimumLevel then
+            checkBox:SetFrameLevel(minimumLevel)
+        end
+    end
+
+    local checked = checkBox.GetCheckedTexture and checkBox:GetCheckedTexture()
+    if not checked and checkBox.CreateTexture and checkBox.SetCheckedTexture then
+        checked = checkBox:CreateTexture(nil, "OVERLAY")
+        checked:SetTexture(CHECK_TEXTURE)
+        checked:SetAllPoints(checkBox)
+        checkBox:SetCheckedTexture(checked)
+    end
+    RaiseTexture(checked, 7)
+    RaiseTexture(checkBox.GetDisabledCheckedTexture and checkBox:GetDisabledCheckedTexture(), 7)
+    RaiseTexture(checkBox.GetHighlightTexture and checkBox:GetHighlightTexture(), 6)
 
     local name = checkBox.GetName and checkBox:GetName()
     local text = name and _G[name .. "Text"]
