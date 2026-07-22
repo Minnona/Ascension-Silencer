@@ -5,8 +5,8 @@ _G.AscensionSilencer = AS
 
 AS.addonName = ADDON_NAME or "AscensionSilencer"
 AS.displayName = "Ascension Silencer"
-AS.version = "0.1.1"
-AS.schemaVersion = 1
+AS.version = "0.2.2"
+AS.schemaVersion = 2
 AS.modules = {}
 AS.moduleOrder = {}
 AS.ready = false
