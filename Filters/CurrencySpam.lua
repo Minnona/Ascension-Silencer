@@ -52,9 +52,12 @@ function module:Evaluate(context)
 
     local hasBazaar = string.find(text, "bazaar token", 1, true)
         or string.find(text, "bazar token", 1, true)
+        or string.find(text, "baz token", 1, true)
         or string.find(text, "%d+%s*bazaar")
         or string.find(text, "%d+%s*bazar")
+        or (transaction and string.find(text, "%d+%s*baz[%s%p]"))
         or (transaction and (context.tokenSet.bazaar or context.tokenSet.bazar))
+        or (transaction and context.tokenSet.baz and (context.tokenSet.token or context.tokenSet.tokens))
 
     if hasDP then
         score = score + 4
