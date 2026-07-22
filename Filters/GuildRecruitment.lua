@@ -53,6 +53,7 @@ function module:Evaluate(context)
     local join = HasAny(text, {
         "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite",
         "come be part", "come be a part", "be part of the journey", "become part of",
+        "come chill with", "come hang with", "come play with",
     })
     if join then
         score = score + 3
@@ -68,6 +69,7 @@ function module:Evaluate(context)
     local activity = HasAny(text, {
         "active members", "active guild", "weekly raids", "raid team", "pve and pvp", "pvp and pve",
         "social guild", "leveling guild", "fresh guild", "new guild", "independent guild",
+        "progress through pve", "progress through pvp", "high risk", "mythics",
     })
     if activity then
         score = score + 2
@@ -77,7 +79,7 @@ function module:Evaluate(context)
     local promotion = HasAny(text, {
         "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
         "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
-        "all experience levels", "players of all experience",
+        "all experience levels", "players of all experience", "active discord", "active discord and chat", "active chat",
     })
     if promotion then
         score = score + 2
