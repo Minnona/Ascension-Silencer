@@ -9,6 +9,17 @@ local BASE_DEFAULTS = {
         yell = false,
     },
     filters = {},
+    hygiene = {
+        enabled = true,
+        routeCommercial = true,
+        keepTradeClean = true,
+        suppressCrossChannel = true,
+        duplicateWindow = 12,
+        throttleRepeats = true,
+        repeatCooldown = 60,
+        lfgCooldown = 30,
+        tradeChannel = 4,
+    },
     exceptions = {
         allowSelf = true,
         allowFriends = true,
