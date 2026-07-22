@@ -1,6 +1,6 @@
 local AS = AscensionSilencer
 
-local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
+local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8x8"
 
 local function ReadColor(value, fallbackR, fallbackG, fallbackB, fallbackA)
     if type(value) == "table" then
@@ -169,7 +169,7 @@ function AS:SkinSlider(slider)
         track:SetPoint("LEFT", slider, "LEFT", 0, 0)
         track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
         track:SetHeight(8)
-        track:SetFrameLevel(math.max(0, (slider:GetFrameLevel() or 1) - 1))
+        track:SetFrameLevel(slider:GetFrameLevel() or 1)
         slider.asTrack = track
     end
     self:ApplyThemeBackdrop(slider.asTrack, 0.82)
