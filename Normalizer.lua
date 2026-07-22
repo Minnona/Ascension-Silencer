@@ -36,7 +36,9 @@ local function DecodeUTF8(text, position)
 end
 
 local function LowerUTF8(text)
-    text = tostring(text or "")
+    text = string.lower(tostring(text or ""))
+    if not string.find(text, "[\128-\255]") then return text end
+
     local output = {}
     local position = 1
     local length = string.len(text)
@@ -45,7 +47,7 @@ local function LowerUTF8(text)
         local _, nextPosition = DecodeUTF8(text, position)
         if not nextPosition or nextPosition <= position then nextPosition = position + 1 end
         local char = string.sub(text, position, nextPosition - 1)
-        output[#output + 1] = UTF8_LOWER[char] or string.lower(char)
+        output[#output + 1] = UTF8_LOWER[char] or char
         position = nextPosition
     end
 
