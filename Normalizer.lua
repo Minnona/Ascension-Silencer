@@ -6,17 +6,8 @@ local UTF8_LOWER = {
     ["Ä"] = "ä", ["Ë"] = "ë", ["Ï"] = "ï", ["À"] = "à", ["Á"] = "á", ["Â"] = "â",
     ["Ã"] = "ã", ["É"] = "é", ["È"] = "è", ["Ê"] = "ê", ["Í"] = "í", ["Ì"] = "ì",
     ["Ó"] = "ó", ["Ò"] = "ò", ["Ô"] = "ô", ["Õ"] = "õ", ["Ú"] = "ú", ["Ù"] = "ù",
-    ["Ñ"] = "ñ", ["Ț"] = "ț", ["Ţ"] = "ţ", ["Ș"] = "ș", ["Ş"] = "ş", ["Ă"] = "ă",
-    ["Â"] = "â", ["Î"] = "î",
+    ["Ñ"] = "ñ", ["Ț"] = "ț", ["Ţ"] = "ţ", ["Ș"] = "ș", ["Ă"] = "ă", ["Î"] = "î",
 }
-
-local function LowerUTF8(text)
-    text = string.lower(tostring(text or ""))
-    for upper, lower in pairs(UTF8_LOWER) do
-        text = string.gsub(text, upper, lower)
-    end
-    return text
-end
 
 local function DecodeUTF8(text, position)
     local first = string.byte(text, position)
@@ -42,6 +33,23 @@ local function DecodeUTF8(text, position)
     end
 
     return first, position + 1
+end
+
+local function LowerUTF8(text)
+    text = tostring(text or "")
+    local output = {}
+    local position = 1
+    local length = string.len(text)
+
+    while position <= length do
+        local _, nextPosition = DecodeUTF8(text, position)
+        if not nextPosition or nextPosition <= position then nextPosition = position + 1 end
+        local char = string.sub(text, position, nextPosition - 1)
+        output[#output + 1] = UTF8_LOWER[char] or string.lower(char)
+        position = nextPosition
+    end
+
+    return table.concat(output)
 end
 
 local function ClassifyCodepoint(codepoint)
@@ -74,6 +82,45 @@ local function ClassifyCodepoint(codepoint)
     return nil
 end
 
+function AS:EnsureScriptAnalysis(context)
+    if context.scripts then return context.scripts, context.totalLetters or 0 end
+
+    local scripts = {
+        latin = 0,
+        greek = 0,
+        cyrillic = 0,
+        hebrew = 0,
+        arabic = 0,
+        indic = 0,
+        thai = 0,
+        hiragana = 0,
+        katakana = 0,
+        cjk = 0,
+        hangul = 0,
+    }
+
+    local totalLetters = 0
+    local text = context.searchText or ""
+    local position = 1
+    local length = string.len(text)
+
+    while position <= length do
+        local codepoint
+        codepoint, position = DecodeUTF8(text, position)
+        if codepoint then
+            local script = ClassifyCodepoint(codepoint)
+            if script then
+                scripts[script] = scripts[script] + 1
+                totalLetters = totalLetters + 1
+            end
+        end
+    end
+
+    context.scripts = scripts
+    context.totalLetters = totalLetters
+    return scripts, totalLetters
+end
+
 function AS:NormalizeMessage(message)
     local original = tostring(message or "")
     local searchText = string.gsub(original, "|c%x%x%x%x%x%x%x%x", "")
@@ -91,36 +138,8 @@ function AS:NormalizeMessage(message)
     local tokens = {}
     local tokenSet = {}
     for token in string.gmatch(tokenText, "%S+") do
-        table.insert(tokens, token)
+        tokens[#tokens + 1] = token
         tokenSet[token] = true
-    end
-
-    local scripts = {
-        latin = 0,
-        greek = 0,
-        cyrillic = 0,
-        hebrew = 0,
-        arabic = 0,
-        indic = 0,
-        thai = 0,
-        hiragana = 0,
-        katakana = 0,
-        cjk = 0,
-        hangul = 0,
-    }
-
-    local totalLetters = 0
-    local position = 1
-    while position <= string.len(searchText) do
-        local codepoint
-        codepoint, position = DecodeUTF8(searchText, position)
-        if codepoint then
-            local script = ClassifyCodepoint(codepoint)
-            if script then
-                scripts[script] = (scripts[script] or 0) + 1
-                totalLetters = totalLetters + 1
-            end
-        end
     end
 
     return {
@@ -130,7 +149,5 @@ function AS:NormalizeMessage(message)
         tokens = tokens,
         tokenSet = tokenSet,
         tokenCount = #tokens,
-        scripts = scripts,
-        totalLetters = totalLetters,
     }
 end
