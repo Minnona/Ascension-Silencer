@@ -1,4 +1,5 @@
 local AS = AscensionSilencer
+AS.version = "0.3.4"
 
 -- Preserve the checkbox behavior and appearance used before the performance refactor.
 -- ElvUI owns the checked texture, color and state updates.
