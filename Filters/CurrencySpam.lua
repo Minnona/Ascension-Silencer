@@ -11,11 +11,16 @@ local module = {
     },
 }
 
+local TRANSACTION_TOKENS = { "wts", "wtb", "wtt", "buying", "selling", "sell", "buy", "trade", "trading" }
+local TRANSACTION_PHRASES = { "want to sell", "want to buy", "for sale", "paying gold", "selling for gold", "buying for gold" }
+local RATE_PHRASES = { "good rate", "best rate", "cheap rate", "rate is", "per dp", "per token", "each dp", "each token" }
+local CONTACT_PHRASES = { "whisper me", "pst", "pm me", "dm me", "fast trade", "safe trade" }
+
 local function AddMatch(matches, label)
     for _, existing in ipairs(matches) do
         if existing == label then return end
     end
-    table.insert(matches, label)
+    matches[#matches + 1] = label
 end
 
 local function HasToken(context, values)
@@ -37,10 +42,8 @@ function module:Evaluate(context)
     local score = 0
     local matches = {}
 
-    local transaction = HasToken(context, { "wts", "wtb", "wtt", "buying", "selling", "sell", "buy", "trade", "trading" })
-    if not transaction then
-        transaction = HasAny(text, { "want to sell", "want to buy", "for sale", "paying gold", "selling for gold", "buying for gold" })
-    end
+    local transaction = HasToken(context, TRANSACTION_TOKENS)
+    if not transaction then transaction = HasAny(text, TRANSACTION_PHRASES) end
 
     local hasDP = context.tokenSet.dp
         or string.find(text, "donation point", 1, true)
@@ -55,14 +58,13 @@ function module:Evaluate(context)
         or (transaction and (context.tokenSet.bazaar or context.tokenSet.bazar))
         or (transaction and context.tokenSet.baz and (context.tokenSet.token or context.tokenSet.tokens))
 
-    -- Transaction language, a gold price and contact instructions are common in
-    -- ordinary item sales. This module must never block unless its actual
-    -- currencies are present.
+    -- Ordinary item sales often contain WTS, a gold amount and PST. This module
+    -- only scores messages that actually mention one of its currencies.
     if not hasDP and not hasBazaar then
         return {
             score = 0,
             reason = "No Donation Points or Bazaar Tokens detected",
-            matches = {},
+            matches = matches,
         }
     end
 
@@ -81,7 +83,7 @@ function module:Evaluate(context)
         AddMatch(matches, "Bazaar Tokens")
     end
 
-    local rate = HasAny(text, { "good rate", "best rate", "cheap rate", "rate is", "per dp", "per token", "each dp", "each token" })
+    local rate = HasAny(text, RATE_PHRASES)
     if rate or string.find(text, "%d+%s*[:/]%s*%d+") then
         score = score + 2
         AddMatch(matches, rate or "exchange rate")
@@ -92,7 +94,7 @@ function module:Evaluate(context)
         AddMatch(matches, "gold amount")
     end
 
-    local contact = HasAny(text, { "whisper me", "pst", "pm me", "dm me", "fast trade", "safe trade" })
+    local contact = HasAny(text, CONTACT_PHRASES)
     if contact then
         score = score + 1
         AddMatch(matches, contact)
