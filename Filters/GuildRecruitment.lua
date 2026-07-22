@@ -24,7 +24,7 @@ local MEMBER_SEARCH_PHRASES = {
 local JOIN_PHRASES = {
     "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite",
     "come be part", "come be a part", "be part of the journey", "become part of",
-    "come chill with", "come hang with", "come play with",
+    "come chill with", "come hang with", "come hangout", "come hang out", "come play with",
 }
 
 local GUILD_TERMS = { "guild", "community", "family" }
@@ -35,13 +35,15 @@ local ACTIVITY_PHRASES = {
     "progress through pve", "progress through pvp", "high risk", "mythics",
     "ascended bb raiding", "raiding 2x/wk", "raiding 2x week", "raid twice a week",
     "chill dad guild", "dad guild", "still raiding",
+    "pvp leveling focused guild", "pvp leveling guild", "leveling focused guild",
+    "share the experience", "make some new homies",
 }
 
 local PROMOTION_PHRASES = {
     "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
     "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
     "all experience levels", "players of all experience", "active discord", "active discord and chat", "active chat",
-    "leave the drama", "no drama",
+    "leave the drama", "no drama", "highly encouraged", "dwarves highly encouraged",
 }
 
 local function AddMatch(matches, label)
