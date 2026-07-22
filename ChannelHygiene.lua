@@ -7,8 +7,11 @@ AS.hygieneHistory = AS.hygieneHistory or {}
 local MODULE_KEY = "ChannelHygiene"
 local MODULE_NAME = "Channel hygiene"
 
-local COMMERCIAL_TOKENS = {
+local STRONG_COMMERCIAL_TOKENS = {
     wts = true, wtb = true, wtt = true,
+}
+
+local NATURAL_COMMERCIAL_TOKENS = {
     sell = true, selling = true, sold = true,
     buy = true, buying = true,
 }
@@ -18,7 +21,7 @@ local COMMERCIAL_PHRASES = {
     "selling for", "buying for", "can craft", "crafting for tips",
     "looking for crafter", "looking for enchanter", "lf crafter", "lf enchanter",
     "offering crafting", "offering enchants", "crafting services", "enchanting services",
-    "tips appreciated", "your mats", "my mats",
+    "anyone selling", "anyone buying", "tips appreciated", "your mats", "my mats",
 }
 
 local LFG_PHRASES = {
@@ -64,7 +67,7 @@ function AS:IsCommercialMessage(context)
     local text = context.searchText or ""
     local tokenSet = context.tokenSet or {}
 
-    for token in pairs(COMMERCIAL_TOKENS) do
+    for token in pairs(STRONG_COMMERCIAL_TOKENS) do
         if tokenSet[token] then return true, token end
     end
 
@@ -75,9 +78,21 @@ function AS:IsCommercialMessage(context)
     local hasPrice = string.find(text .. " ", "%d+%s*[gsc]%s")
         or string.find(text .. " ", "%d+%s*[kmg]%s*g%s")
         or string.find(text, "%d+%s*[:/]%s*%d+")
+    local hasContact = tokenSet.pst or tokenSet.whisper or tokenSet.pm or tokenSet.offer
 
     if hasItemLink and hasPrice then
         return true, "item and price"
+    end
+
+    for token in pairs(NATURAL_COMMERCIAL_TOKENS) do
+        if tokenSet[token] and (hasItemLink or hasPrice or hasContact) then
+            return true, token
+        end
+    end
+
+    if string.find(text, "^selling ") or string.find(text, "^buying ")
+        or string.find(text, "^sell ") or string.find(text, "^buy ") then
+        return true, "sale or purchase offer"
     end
 
     return false
