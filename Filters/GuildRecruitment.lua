@@ -18,6 +18,7 @@ local RECRUIT_PHRASES = {
 local MEMBER_SEARCH_PHRASES = {
     "looking for more members", "looking for members", "seeking more members", "seeking members",
     "searching for more members", "searching for members", "welcoming new members",
+    "looking for more social", "looking for social players", "social adds", "social recruits",
 }
 
 local JOIN_PHRASES = {
@@ -32,12 +33,15 @@ local ACTIVITY_PHRASES = {
     "active members", "active guild", "weekly raids", "raid team", "pve and pvp", "pvp and pve",
     "social guild", "leveling guild", "fresh guild", "new guild", "independent guild",
     "progress through pve", "progress through pvp", "high risk", "mythics",
+    "ascended bb raiding", "raiding 2x/wk", "raiding 2x week", "raid twice a week",
+    "chill dad guild", "dad guild", "still raiding",
 }
 
 local PROMOTION_PHRASES = {
     "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
     "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
     "all experience levels", "players of all experience", "active discord", "active discord and chat", "active chat",
+    "leave the drama", "no drama",
 }
 
 local function AddMatch(matches, label)
