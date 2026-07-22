@@ -26,7 +26,7 @@ local SCRIPT_LABELS = {
 
 local languageNames = nil
 local tokenIndex = nil
-local phraseEntries = nil
+local phraseIndex = nil
 local charIndex = nil
 
 local function AddMatch(matches, label)
@@ -50,7 +50,7 @@ local function PrepareIndexes(addon)
 
     languageNames = {}
     tokenIndex = {}
-    phraseEntries = {}
+    phraseIndex = {}
     charIndex = {}
 
     for languageName, language in pairs(addon.Data.languages or {}) do
@@ -66,11 +66,15 @@ local function PrepareIndexes(addon)
         end
 
         for _, phrase in ipairs(language.phrases or {}) do
-            phraseEntries[#phraseEntries + 1] = {
-                languageName,
-                phrase[1],
-                phrase[2] or 1,
-            }
+            local firstToken = string.match(phrase[1] or "", "^(%S+)")
+            if firstToken then
+                local entries = phraseIndex[firstToken]
+                if not entries then
+                    entries = {}
+                    phraseIndex[firstToken] = entries
+                end
+                entries[#entries + 1] = { languageName, phrase[1], phrase[2] or 1 }
+            end
         end
 
         for _, char in ipairs(language.chars or {}) do
@@ -148,20 +152,24 @@ function module:Evaluate(context, moduleDB, addon)
         end
     end
 
-    for _, entry in ipairs(phraseEntries) do
-        if string.find(context.searchText, entry[2], 1, true) then
-            local languageName = entry[1]
-            languageScores[languageName] = (languageScores[languageName] or 0) + entry[3]
-            AddLanguageMatch(languageMatches, languageName, entry[2])
+    for token in pairs(context.tokenSet) do
+        local entries = phraseIndex[token]
+        if entries then
+            for _, entry in ipairs(entries) do
+                if string.find(context.searchText, entry[2], 1, true) then
+                    local languageName = entry[1]
+                    languageScores[languageName] = (languageScores[languageName] or 0) + entry[3]
+                    AddLanguageMatch(languageMatches, languageName, entry[2])
+                end
+            end
         end
     end
 
-    if string.find(context.searchText, "[\128-\255]") then
-        for char, languages in pairs(charIndex) do
-            if string.find(context.searchText, char, 1, true) then
-                for _, languageName in ipairs(languages) do
-                    charHits[languageName] = (charHits[languageName] or 0) + 1
-                end
+    for char in pairs(context.nonAsciiChars or {}) do
+        local languages = charIndex[char]
+        if languages then
+            for _, languageName in ipairs(languages) do
+                charHits[languageName] = (charHits[languageName] or 0) + 1
             end
         end
     end
