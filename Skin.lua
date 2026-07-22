@@ -164,21 +164,36 @@ function AS:SkinSlider(slider)
         end
     end
 
-    if not slider.asTrack then
-        local track = CreateFrame("Frame", nil, slider)
-        track:SetPoint("LEFT", slider, "LEFT", 0, 0)
-        track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
-        track:SetHeight(8)
-        track:SetFrameLevel(slider:GetFrameLevel() or 1)
-        slider.asTrack = track
+    if not slider.asTrackBorder then
+        local border = slider:CreateTexture(nil, "BACKGROUND")
+        border:SetPoint("LEFT", slider, "LEFT", 0, 0)
+        border:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
+        border:SetHeight(8)
+        slider.asTrackBorder = border
     end
-    self:ApplyThemeBackdrop(slider.asTrack, 0.82)
+
+    if not slider.asTrackFill then
+        local fill = slider:CreateTexture(nil, "BORDER")
+        fill:SetPoint("LEFT", slider, "LEFT", 1, 0)
+        fill:SetPoint("RIGHT", slider, "RIGHT", -1, 0)
+        fill:SetHeight(6)
+        slider.asTrackFill = fill
+    end
+
+    slider.asTrackBorder:SetTexture(theme.blankTex)
+    slider.asTrackBorder:SetVertexColor(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
+    slider.asTrackBorder:Show()
+
+    slider.asTrackFill:SetTexture(theme.blankTex)
+    slider.asTrackFill:SetVertexColor(theme.backdrop[1], theme.backdrop[2], theme.backdrop[3], theme.backdrop[4])
+    slider.asTrackFill:Show()
 
     if thumb then
         thumb:SetTexture(theme.normTex)
         thumb:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4])
         thumb:SetWidth(12)
         thumb:SetHeight(18)
+        if thumb.SetDrawLayer then thumb:SetDrawLayer("OVERLAY", 7) end
         thumb:Show()
     end
 
