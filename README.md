@@ -75,9 +75,6 @@ The final folder should be:
 
 Use the location of your own AscensionWoW folder if it is installed elsewhere.
 
-## Releases
-
-Changing `## Version` in `AscensionSilencer.toc` on `main` automatically builds the correctly structured ZIP and publishes a matching GitHub Release.
 
 ## License
 
