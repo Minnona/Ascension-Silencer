@@ -24,11 +24,64 @@ local SCRIPT_LABELS = {
     hangul = "Korean",
 }
 
+local languageNames = nil
+local tokenIndex = nil
+local phraseEntries = nil
+local charIndex = nil
+
 local function AddMatch(matches, label)
     for _, existing in ipairs(matches) do
         if existing == label then return end
     end
-    table.insert(matches, label)
+    matches[#matches + 1] = label
+end
+
+local function AddLanguageMatch(allMatches, languageName, label)
+    local matches = allMatches[languageName]
+    if not matches then
+        matches = {}
+        allMatches[languageName] = matches
+    end
+    AddMatch(matches, label)
+end
+
+local function PrepareIndexes(addon)
+    if tokenIndex then return end
+
+    languageNames = {}
+    tokenIndex = {}
+    phraseEntries = {}
+    charIndex = {}
+
+    for languageName, language in pairs(addon.Data.languages or {}) do
+        languageNames[#languageNames + 1] = languageName
+
+        for token, weight in pairs(language.words or {}) do
+            local entries = tokenIndex[token]
+            if not entries then
+                entries = {}
+                tokenIndex[token] = entries
+            end
+            entries[#entries + 1] = { languageName, weight }
+        end
+
+        for _, phrase in ipairs(language.phrases or {}) do
+            phraseEntries[#phraseEntries + 1] = {
+                languageName,
+                phrase[1],
+                phrase[2] or 1,
+            }
+        end
+
+        for _, char in ipairs(language.chars or {}) do
+            local languages = charIndex[char]
+            if not languages then
+                languages = {}
+                charIndex[char] = languages
+            end
+            languages[#languages + 1] = languageName
+        end
+    end
 end
 
 local function CountEnglish(context, englishWords)
@@ -40,8 +93,10 @@ local function CountEnglish(context, englishWords)
 end
 
 function module:Evaluate(context, moduleDB, addon)
-    local scripts = context.scripts or {}
-    local totalLetters = math.max(1, context.totalLetters or 0)
+    PrepareIndexes(addon)
+
+    local scripts, totalLetterCount = addon:EnsureScriptAnalysis(context)
+    local totalLetters = math.max(1, totalLetterCount or 0)
     local bestScript = nil
     local bestScriptCount = 0
 
@@ -71,52 +126,66 @@ function module:Evaluate(context, moduleDB, addon)
         end
     end
 
-    local bestLanguage = nil
-    local bestLanguageScore = 0
-    local bestLanguageMatches = nil
+    local languageScores = {}
+    local languageMatches = {}
+    local matchedWords = {}
+    local charHits = {}
     local wowTerms = addon.Data.wowTerms or {}
     local englishWords = addon.Data.englishWords or {}
+    local englishCount = CountEnglish(context, englishWords)
 
-    for languageName, language in pairs(addon.Data.languages or {}) do
-        local languageScore = 0
-        local languageMatches = {}
-        local matchedWords = 0
-
-        for _, token in ipairs(context.tokens) do
-            if not wowTerms[token] then
-                local weight = language.words and language.words[token]
-                if weight then
-                    languageScore = languageScore + weight
-                    matchedWords = matchedWords + 1
-                    AddMatch(languageMatches, token)
+    for _, token in ipairs(context.tokens) do
+        if not wowTerms[token] then
+            local entries = tokenIndex[token]
+            if entries then
+                for _, entry in ipairs(entries) do
+                    local languageName = entry[1]
+                    languageScores[languageName] = (languageScores[languageName] or 0) + (entry[2] or 1)
+                    matchedWords[languageName] = (matchedWords[languageName] or 0) + 1
+                    AddLanguageMatch(languageMatches, languageName, token)
                 end
             end
         end
+    end
 
-        for _, phrase in ipairs(language.phrases or {}) do
-            if string.find(context.searchText, phrase[1], 1, true) then
-                languageScore = languageScore + (phrase[2] or 1)
-                AddMatch(languageMatches, phrase[1])
-            end
+    for _, entry in ipairs(phraseEntries) do
+        if string.find(context.searchText, entry[2], 1, true) then
+            local languageName = entry[1]
+            languageScores[languageName] = (languageScores[languageName] or 0) + entry[3]
+            AddLanguageMatch(languageMatches, languageName, entry[2])
         end
+    end
 
-        local charHits = 0
-        for _, char in ipairs(language.chars or {}) do
+    if string.find(context.searchText, "[\128-\255]") then
+        for char, languages in pairs(charIndex) do
             if string.find(context.searchText, char, 1, true) then
-                charHits = charHits + 1
+                for _, languageName in ipairs(languages) do
+                    charHits[languageName] = (charHits[languageName] or 0) + 1
+                end
             end
         end
-        if charHits > 0 then
-            languageScore = languageScore + math.min(2, charHits)
+    end
+
+    local bestLanguage = nil
+    local bestLanguageScore = 0
+    local bestLanguageMatches = nil
+
+    for _, languageName in ipairs(languageNames) do
+        local language = addon.Data.languages[languageName]
+        local languageScore = languageScores[languageName] or 0
+        local languageMatchedWords = matchedWords[languageName] or 0
+        local languageCharHits = charHits[languageName] or 0
+
+        if languageCharHits > 0 then
+            languageScore = languageScore + math.min(2, languageCharHits)
         end
 
-        if context.tokenCount <= 1 and matchedWords <= 1 then
+        if context.tokenCount <= 1 and languageMatchedWords <= 1 then
             languageScore = math.min(languageScore, 3)
-        elseif matchedWords >= 3 then
+        elseif languageMatchedWords >= 3 then
             languageScore = languageScore + 1
         end
 
-        local englishCount = CountEnglish(context, englishWords)
         if englishCount >= 3 then
             languageScore = languageScore - 2
         elseif englishCount >= 1 then
@@ -126,7 +195,7 @@ function module:Evaluate(context, moduleDB, addon)
         if languageScore > bestLanguageScore then
             bestLanguage = language.label or languageName
             bestLanguageScore = languageScore
-            bestLanguageMatches = languageMatches
+            bestLanguageMatches = languageMatches[languageName]
         end
     end
 
