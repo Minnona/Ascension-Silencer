@@ -2,7 +2,7 @@
 ## Title: Ascension Silencer
 ## Notes: Modular public chat filter for Project Ascension.
 ## Author: Minn
-## Version: 0.3.8
+## Version: 0.3.9
 ## SavedVariables: AscensionSilencerDB
 
 Core.lua
