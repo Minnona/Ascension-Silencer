@@ -41,7 +41,19 @@ function module:Evaluate(context)
         AddMatch(matches, recruit)
     end
 
-    local join = HasAny(text, { "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite" })
+    local memberSearch = HasAny(text, {
+        "looking for more members", "looking for members", "seeking more members", "seeking members",
+        "searching for more members", "searching for members", "welcoming new members",
+    })
+    if memberSearch then
+        score = score + 5
+        AddMatch(matches, memberSearch)
+    end
+
+    local join = HasAny(text, {
+        "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite",
+        "come be part", "come be a part", "be part of the journey", "become part of",
+    })
     if join then
         score = score + 3
         AddMatch(matches, join)
@@ -53,13 +65,20 @@ function module:Evaluate(context)
         AddMatch(matches, guild)
     end
 
-    local activity = HasAny(text, { "active members", "active guild", "weekly raids", "raid team", "pve and pvp", "pvp and pve", "social guild", "leveling guild", "fresh guild", "new guild" })
+    local activity = HasAny(text, {
+        "active members", "active guild", "weekly raids", "raid team", "pve and pvp", "pvp and pve",
+        "social guild", "leveling guild", "fresh guild", "new guild", "independent guild",
+    })
     if activity then
         score = score + 2
         AddMatch(matches, activity)
     end
 
-    local promotion = HasAny(text, { "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available" })
+    local promotion = HasAny(text, {
+        "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
+        "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
+        "all experience levels", "players of all experience",
+    })
     if promotion then
         score = score + 2
         AddMatch(matches, promotion)

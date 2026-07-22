@@ -18,3 +18,4 @@ Filters\StreamAdvertising.lua
 Filters\NonEnglish.lua
 Skin.lua
 UI.lua
+UIEnhancements.lua

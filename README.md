@@ -53,4 +53,4 @@ Use the location of your own AscensionWoW folder if it is installed elsewhere.
 
 ## License
 
-Ascension Silencer is licensed under GPL-3.0. Anyone may use, study, modify and redistribute it under the same license.
+Ascension Silencer is licensed under GPL-3.0-only. Anyone may use, study, modify and redistribute it under the same license.

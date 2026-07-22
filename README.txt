@@ -20,4 +20,4 @@ Place the AscensionSilencer folder in:
 
 Use your own AscensionWoW location if the game is installed elsewhere.
 
-License: GPL-3.0
+License: GPL-3.0-only

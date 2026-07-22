@@ -1,8 +1,34 @@
 local AS = AscensionSilencer
 
-function AS:GetElvUISkinModule()
-    if not IsAddOnLoaded or not IsAddOnLoaded("ElvUI") then return nil end
+local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
+local function ReadColor(value, fallbackR, fallbackG, fallbackB, fallbackA)
+    if type(value) == "table" then
+        local r = tonumber(value.r or value[1])
+        local g = tonumber(value.g or value[2])
+        local b = tonumber(value.b or value[3])
+        local a = tonumber(value.a or value[4])
+        if r and g and b then
+            return r, g, b, a or fallbackA or 1
+        end
+    end
+    return fallbackR, fallbackG, fallbackB, fallbackA or 1
+end
+
+local function TryMethod(owner, method, target)
+    if owner and type(owner[method]) == "function" then
+        return pcall(owner[method], owner, target)
+    end
+    return false
+end
+
+local function HideTexture(texture)
+    if not texture then return end
+    if texture.SetTexture then texture:SetTexture(nil) end
+    if texture.Hide then texture:Hide() end
+end
+
+function AS:GetElvUIEngine()
     local E = nil
     if type(_G.ElvUI) == "table" then
         E = _G.ElvUI[1]
@@ -10,52 +36,176 @@ function AS:GetElvUISkinModule()
     if not E and type(_G.E) == "table" then
         E = _G.E
     end
-    if not E or not E.GetModule then return nil end
+    return E
+end
+
+function AS:IsElvUIAvailable()
+    return self:GetElvUIEngine() and true or false
+end
+
+function AS:GetElvUISkinModule()
+    local E = self:GetElvUIEngine()
+    if not E or type(E.GetModule) ~= "function" then return nil end
 
     local ok, skins = pcall(E.GetModule, E, "Skins")
     if ok then return skins end
     return nil
 end
 
-local function TryMethod(owner, method, target)
-    if owner and owner[method] then
-        return pcall(owner[method], owner, target)
-    end
-    return false
+function AS:GetElvUITheme()
+    local E = self:GetElvUIEngine()
+    local media = E and E.media or {}
+    local general = E and E.db and E.db.general or {}
+
+    local accentSource = general.valuecolor or media.rgbvaluecolor
+    local backdropSource = general.backdropcolor or media.backdropcolor
+    local borderSource = general.bordercolor or media.bordercolor
+
+    local ar, ag, ab, aa = ReadColor(accentSource, 0.10, 0.62, 0.90, 1)
+    local br, bg, bb, ba = ReadColor(backdropSource, 0.06, 0.06, 0.06, 0.92)
+    local er, eg, eb, ea = ReadColor(borderSource, 0.22, 0.22, 0.22, 1)
+
+    return {
+        normTex = media.normTex or media.blankTex or WHITE_TEXTURE,
+        blankTex = media.blankTex or WHITE_TEXTURE,
+        accent = { ar, ag, ab, aa },
+        backdrop = { br, bg, bb, ba },
+        border = { er, eg, eb, ea },
+    }
+end
+
+function AS:ApplyThemeBackdrop(frame, alphaMultiplier)
+    if not frame or not frame.SetBackdrop then return end
+    local theme = self:GetElvUITheme()
+    local alpha = (theme.backdrop[4] or 1) * (alphaMultiplier or 1)
+
+    frame:SetBackdrop({
+        bgFile = theme.blankTex,
+        edgeFile = theme.blankTex,
+        tile = false,
+        edgeSize = 1,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    frame:SetBackdropColor(theme.backdrop[1], theme.backdrop[2], theme.backdrop[3], alpha)
+    frame:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
 end
 
 function AS:SkinPanel(panel)
-    local skins = self:GetElvUISkinModule()
-    if not skins or not panel then return end
+    if not panel or not self:IsElvUIAvailable() then return end
+    if panel.asElvUISkinned then return end
 
-    if panel.StripTextures then pcall(panel.StripTextures, panel) end
-    if panel.CreateBackdrop then
-        pcall(panel.CreateBackdrop, panel, "Transparent")
+    local native = false
+    if type(panel.StripTextures) == "function" then pcall(panel.StripTextures, panel) end
+    if type(panel.CreateBackdrop) == "function" then
+        native = pcall(panel.CreateBackdrop, panel, "Transparent")
     end
+    if not native then
+        self:ApplyThemeBackdrop(panel, 0.94)
+    end
+
+    panel.asElvUISkinned = true
+end
+
+function AS:SkinCard(card)
+    if not card or not self:IsElvUIAvailable() then return end
+    self:ApplyThemeBackdrop(card, 0.58)
+    card.asElvUISkinned = true
 end
 
 function AS:SkinButton(button)
-    TryMethod(self:GetElvUISkinModule(), "HandleButton", button)
+    if not button or not self:IsElvUIAvailable() then return end
+    if button.asElvUISkinned then return end
+
+    local skins = self:GetElvUISkinModule()
+    local handled = TryMethod(skins, "HandleButton", button)
+
+    if not handled then
+        local name = button.GetName and button:GetName()
+        HideTexture(button.GetNormalTexture and button:GetNormalTexture())
+        HideTexture(button.GetPushedTexture and button:GetPushedTexture())
+        HideTexture(button.GetDisabledTexture and button:GetDisabledTexture())
+        if name then
+            HideTexture(_G[name .. "Left"])
+            HideTexture(_G[name .. "Middle"])
+            HideTexture(_G[name .. "Right"])
+        end
+        self:ApplyThemeBackdrop(button, 0.82)
+    end
+
+    button.asElvUISkinned = true
 end
 
 function AS:SkinCheckBox(checkBox)
-    TryMethod(self:GetElvUISkinModule(), "HandleCheckBox", checkBox)
-end
+    if not checkBox or not self:IsElvUIAvailable() then return end
+    if not checkBox.asElvUISkinned then
+        local skins = self:GetElvUISkinModule()
+        TryMethod(skins, "HandleCheckBox", checkBox)
+        checkBox.asElvUISkinned = true
+    end
 
-function AS:SkinSlider(slider)
-    local skins = self:GetElvUISkinModule()
-    if not TryMethod(skins, "HandleSliderFrame", slider) then
-        TryMethod(skins, "HandleSlider", slider)
+    local name = checkBox.GetName and checkBox:GetName()
+    local text = name and _G[name .. "Text"]
+    if text then
+        text:ClearAllPoints()
+        text:SetPoint("LEFT", checkBox, "RIGHT", 5, 1)
     end
 end
 
+function AS:SkinSlider(slider)
+    if not slider or not self:IsElvUIAvailable() then return end
+
+    local theme = self:GetElvUITheme()
+    local thumb = slider.GetThumbTexture and slider:GetThumbTexture()
+    local regions = { slider:GetRegions() }
+
+    for _, region in ipairs(regions) do
+        if region ~= thumb and region.GetObjectType and region:GetObjectType() == "Texture" then
+            HideTexture(region)
+        end
+    end
+
+    if not slider.asTrack then
+        local track = CreateFrame("Frame", nil, slider)
+        track:SetPoint("LEFT", slider, "LEFT", 0, 0)
+        track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
+        track:SetHeight(8)
+        track:SetFrameLevel(math.max(0, (slider:GetFrameLevel() or 1) - 1))
+        slider.asTrack = track
+    end
+    self:ApplyThemeBackdrop(slider.asTrack, 0.82)
+
+    if thumb then
+        thumb:SetTexture(theme.normTex)
+        thumb:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4])
+        thumb:SetWidth(12)
+        thumb:SetHeight(18)
+        thumb:Show()
+    end
+
+    slider.asElvUISkinned = true
+end
+
 function AS:SkinEditBox(editBox)
-    TryMethod(self:GetElvUISkinModule(), "HandleEditBox", editBox)
+    if not editBox or not self:IsElvUIAvailable() then return end
+    if editBox.asElvUISkinned then return end
+
+    local skins = self:GetElvUISkinModule()
+    local handled = TryMethod(skins, "HandleEditBox", editBox)
+    if not handled then
+        self:ApplyThemeBackdrop(editBox, 0.82)
+    end
+
+    editBox.asElvUISkinned = true
 end
 
 function AS:SkinScrollFrame(scrollFrame)
-    if not scrollFrame or not scrollFrame.GetName then return end
-    local name = scrollFrame:GetName()
+    if not scrollFrame or not self:IsElvUIAvailable() then return end
+    local name = scrollFrame.GetName and scrollFrame:GetName()
     local scrollBar = name and _G[name .. "ScrollBar"]
-    TryMethod(self:GetElvUISkinModule(), "HandleScrollBar", scrollBar)
+    if not scrollBar then return end
+    if scrollBar.asElvUISkinned then return end
+
+    local skins = self:GetElvUISkinModule()
+    TryMethod(skins, "HandleScrollBar", scrollBar)
+    scrollBar.asElvUISkinned = true
 end
