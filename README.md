@@ -14,29 +14,15 @@ Public channels are filtered by default. Say and Yell are optional.
 
 ## Channel Hygiene
 
-Channel Hygiene keeps public chat organized without hiding the first appropriate copy of a legitimate post.
+Channel Hygiene keeps posts in the right public channel and reduces repeated spam from the same sender.
 
-By default it can:
+- Commercial posts are kept in Trade and hidden elsewhere
+- Non-commercial posts can be hidden from Trade
+- Cross-channel duplicates are suppressed
+- Repeated messages are throttled with adjustable cooldowns
+- LFG/LFM posts use a shorter cooldown by default
 
-- Keep buying, selling, trading and crafting-service posts in Trade
-- Hide commercial copies posted outside Trade
-- Hide unrelated conversation and LFG posts from Trade
-- Suppress rapid copies of the same message across several public channels
-- Throttle repeated messages from the same sender
-- Use a shorter cooldown for LFG and LFM posts
-
-Default timing:
-
-- Cross-channel duplicate window: 12 seconds
-- General repeat cooldown: 60 seconds
-- LFG/LFM repeat cooldown: 30 seconds
-- Fallback Trade channel: `/4`
-
-All Channel Hygiene options and cooldowns are adjustable under **Interface → AddOns → Ascension Silencer → Channel Hygiene**.
-
-Duplicate matching ignores capitalization, raid markers, decorative symbols, repeated punctuation and extra spaces. Meaningful changes such as a different item, price, quantity, dungeon or requested role are treated as a new message.
-
-Channel filters cannot remove a message that has already appeared. Commercial posts are therefore routed by hiding obvious commercial content outside Trade rather than waiting for a later Trade copy.
+Configure it under **Interface → AddOns → Ascension Silencer → Channel Hygiene**.
 
 ## Settings
 
