@@ -18,7 +18,9 @@ return {
     { message = "GUILD MAS ESPAÑOLA QUE FRANCO WHISP NO LATAM NO PANCHO", blocked = true, module = "NonEnglish" },
     { message = "Si quieren GUILD LATAM FULL PVP susurrenme!!!", blocked = true, module = "NonEnglish" },
     { message = "MYT GUILD HABLA HISPANA LATINA. ENFOCADA EN EL CONTENIDO PVE RECLUTAMOS GENTE PARA COMPLETAR EL CONTENIDO DE CLASSIC. AMBIENTE CHILL", blocked = true, module = "NonEnglish" },
+    { message = "Doom recrute des HORDEUX ouvert à tout type de joueur pour la HORDE!!!", blocked = true, module = "NonEnglish" },
     { message = "hola gente", blocked = false },
+    { message = "bonjour", blocked = false },
     { message = "selam", blocked = false },
     { message = "LFM tank and healer for BRD", blocked = false },
 
