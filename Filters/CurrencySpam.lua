@@ -37,18 +37,6 @@ function module:Evaluate(context)
     local score = 0
     local matches = {}
 
-    local currency = nil
-    if context.tokenSet.dp or string.find(text, "donation point", 1, true) then
-        currency = "Donation Points"
-    elseif string.find(text, "bazaar token", 1, true) or string.find(text, "bazar token", 1, true) then
-        currency = "Bazaar Tokens"
-    end
-
-    if currency then
-        score = score + 4
-        AddMatch(matches, currency)
-    end
-
     local transaction = HasToken(context, { "wts", "wtb", "wtt", "buying", "selling", "sell", "buy", "trade", "trading" })
     if not transaction then
         transaction = HasAny(text, { "want to sell", "want to buy", "for sale", "paying gold", "selling for gold", "buying for gold" })
@@ -58,7 +46,27 @@ function module:Evaluate(context)
         AddMatch(matches, transaction)
     end
 
-    local rate = HasAny(text, { "good rate", "best rate", "cheap rate", "rate is", "per dp", "per token" })
+    local hasDP = context.tokenSet.dp
+        or string.find(text, "donation point", 1, true)
+        or string.find(text, "%d+%s*dp")
+
+    local hasBazaar = string.find(text, "bazaar token", 1, true)
+        or string.find(text, "bazar token", 1, true)
+        or string.find(text, "%d+%s*bazaar")
+        or string.find(text, "%d+%s*bazar")
+        or (transaction and (context.tokenSet.bazaar or context.tokenSet.bazar))
+
+    if hasDP then
+        score = score + 4
+        AddMatch(matches, "Donation Points")
+    end
+
+    if hasBazaar then
+        score = score + 4
+        AddMatch(matches, "Bazaar Tokens")
+    end
+
+    local rate = HasAny(text, { "good rate", "best rate", "cheap rate", "rate is", "per dp", "per token", "each dp", "each token" })
     if rate or string.find(text, "%d+%s*[:/]%s*%d+") then
         score = score + 2
         AddMatch(matches, rate or "exchange rate")
