@@ -28,102 +28,14 @@ local function HideTexture(texture)
     if texture.Hide then texture:Hide() end
 end
 
-local function RaiseTexture(texture, subLevel)
-    if texture and texture.SetDrawLayer then
-        texture:SetDrawLayer("OVERLAY", subLevel or 7)
-    end
-end
-
-local function IsInsideScrollFrame(frame)
-    local parent = frame and frame.GetParent and frame:GetParent()
-    local depth = 0
-
-    while parent and depth < 8 do
-        if parent.GetObjectType and parent:GetObjectType() == "ScrollFrame" then
-            return true
-        end
-        parent = parent.GetParent and parent:GetParent() or nil
-        depth = depth + 1
-    end
-
-    return false
-end
-
-local function UpdateManagedCheckBox(checkBox)
-    local fill = checkBox and checkBox.asManagedCheckFill
-    if not fill then return end
-
-    if checkBox:GetChecked() then
-        fill:Show()
-    else
-        fill:Hide()
-    end
-end
-
-local function SkinManagedCheckBox(checkBox, theme)
-    if not checkBox.asManagedCheckBox then
-        HideTexture(checkBox.GetNormalTexture and checkBox:GetNormalTexture())
-        HideTexture(checkBox.GetPushedTexture and checkBox:GetPushedTexture())
-        HideTexture(checkBox.GetDisabledTexture and checkBox:GetDisabledTexture())
-        HideTexture(checkBox.GetCheckedTexture and checkBox:GetCheckedTexture())
-        HideTexture(checkBox.GetDisabledCheckedTexture and checkBox:GetDisabledCheckedTexture())
-        HideTexture(checkBox.GetHighlightTexture and checkBox:GetHighlightTexture())
-
-        local indicator = CreateFrame("Frame", nil, checkBox)
-        indicator:SetWidth(18)
-        indicator:SetHeight(18)
-        indicator:SetPoint("CENTER", checkBox, "CENTER", 0, 0)
-        indicator:EnableMouse(false)
-        indicator:SetFrameLevel((checkBox:GetFrameLevel() or 0) + 10)
-        indicator:SetBackdrop({
-            bgFile = theme.blankTex,
-            edgeFile = theme.blankTex,
-            tile = false,
-            edgeSize = 1,
-            insets = { left = 1, right = 1, top = 1, bottom = 1 },
-        })
-
-        local fill = indicator:CreateTexture(nil, "ARTWORK")
-        fill:SetPoint("TOPLEFT", indicator, "TOPLEFT", 2, -2)
-        fill:SetPoint("BOTTOMRIGHT", indicator, "BOTTOMRIGHT", -2, 2)
-
-        checkBox.asManagedCheckBox = indicator
-        checkBox.asManagedCheckFill = fill
-        checkBox:HookScript("OnClick", UpdateManagedCheckBox)
-        checkBox:HookScript("OnShow", UpdateManagedCheckBox)
-
-        local hooked = false
-        if hooksecurefunc then
-            hooked = pcall(hooksecurefunc, checkBox, "SetChecked", UpdateManagedCheckBox)
-        end
-
-        if not hooked and type(checkBox.SetChecked) == "function" then
-            local originalSetChecked = checkBox.SetChecked
-            checkBox.SetChecked = function(self, value)
-                originalSetChecked(self, value)
-                UpdateManagedCheckBox(self)
-            end
-        end
-    end
-
-    local indicator = checkBox.asManagedCheckBox
-    local fill = checkBox.asManagedCheckFill
-    if indicator then
-        indicator:SetBackdropColor(theme.backdrop[1], theme.backdrop[2], theme.backdrop[3], 0.95)
-        indicator:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
-    end
-    if fill then
-        fill:SetTexture(theme.blankTex)
-        fill:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4])
-    end
-
-    UpdateManagedCheckBox(checkBox)
-end
-
 function AS:GetElvUIEngine()
     local E = nil
-    if type(_G.ElvUI) == "table" then E = _G.ElvUI[1] end
-    if not E and type(_G.E) == "table" then E = _G.E end
+    if type(_G.ElvUI) == "table" then
+        E = _G.ElvUI[1]
+    end
+    if not E and type(_G.E) == "table" then
+        E = _G.E
+    end
     return E
 end
 
@@ -179,25 +91,30 @@ function AS:ApplyThemeBackdrop(frame, alphaMultiplier)
 end
 
 function AS:SkinPanel(panel)
-    if not panel or not self:IsElvUIAvailable() or panel.asElvUISkinned then return end
+    if not panel or not self:IsElvUIAvailable() then return end
+    if panel.asElvUISkinned then return end
 
     local native = false
     if type(panel.StripTextures) == "function" then pcall(panel.StripTextures, panel) end
     if type(panel.CreateBackdrop) == "function" then
         native = pcall(panel.CreateBackdrop, panel, "Transparent")
     end
-    if not native then self:ApplyThemeBackdrop(panel, 0.94) end
+    if not native then
+        self:ApplyThemeBackdrop(panel, 0.94)
+    end
+
     panel.asElvUISkinned = true
 end
 
 function AS:SkinCard(card)
-    if not card or not self:IsElvUIAvailable() or card.asElvUISkinned then return end
+    if not card or not self:IsElvUIAvailable() then return end
     self:ApplyThemeBackdrop(card, 0.58)
     card.asElvUISkinned = true
 end
 
 function AS:SkinButton(button)
-    if not button or not self:IsElvUIAvailable() or button.asElvUISkinned then return end
+    if not button or not self:IsElvUIAvailable() then return end
+    if button.asElvUISkinned then return end
 
     local skins = self:GetElvUISkinModule()
     local handled = TryMethod(skins, "HandleButton", button)
@@ -220,26 +137,10 @@ end
 
 function AS:SkinCheckBox(checkBox)
     if not checkBox or not self:IsElvUIAvailable() then return end
-
-    local parent = checkBox.GetParent and checkBox:GetParent()
-    if parent and parent.GetFrameLevel and checkBox.GetFrameLevel and checkBox.SetFrameLevel then
-        local minimumLevel = (parent:GetFrameLevel() or 0) + 2
-        if (checkBox:GetFrameLevel() or 0) < minimumLevel then
-            checkBox:SetFrameLevel(minimumLevel)
-        end
-    end
-
-    if IsInsideScrollFrame(checkBox) then
-        SkinManagedCheckBox(checkBox, self:GetElvUITheme())
-        checkBox.asElvUISkinned = true
-    elseif not checkBox.asElvUISkinned then
+    if not checkBox.asElvUISkinned then
         local skins = self:GetElvUISkinModule()
         TryMethod(skins, "HandleCheckBox", checkBox)
         checkBox.asElvUISkinned = true
-
-        RaiseTexture(checkBox.GetCheckedTexture and checkBox:GetCheckedTexture(), 7)
-        RaiseTexture(checkBox.GetDisabledCheckedTexture and checkBox:GetDisabledCheckedTexture(), 7)
-        RaiseTexture(checkBox.GetHighlightTexture and checkBox:GetHighlightTexture(), 6)
     end
 
     local name = checkBox.GetName and checkBox:GetName()
@@ -251,7 +152,7 @@ function AS:SkinCheckBox(checkBox)
 end
 
 function AS:SkinSlider(slider)
-    if not slider or not self:IsElvUIAvailable() or slider.asElvUISkinned then return end
+    if not slider or not self:IsElvUIAvailable() then return end
 
     local theme = self:GetElvUITheme()
     local thumb = slider.GetThumbTexture and slider:GetThumbTexture()
@@ -300,11 +201,15 @@ function AS:SkinSlider(slider)
 end
 
 function AS:SkinEditBox(editBox)
-    if not editBox or not self:IsElvUIAvailable() or editBox.asElvUISkinned then return end
+    if not editBox or not self:IsElvUIAvailable() then return end
+    if editBox.asElvUISkinned then return end
 
     local skins = self:GetElvUISkinModule()
     local handled = TryMethod(skins, "HandleEditBox", editBox)
-    if not handled then self:ApplyThemeBackdrop(editBox, 0.82) end
+    if not handled then
+        self:ApplyThemeBackdrop(editBox, 0.82)
+    end
+
     editBox.asElvUISkinned = true
 end
 
@@ -312,7 +217,8 @@ function AS:SkinScrollFrame(scrollFrame)
     if not scrollFrame or not self:IsElvUIAvailable() then return end
     local name = scrollFrame.GetName and scrollFrame:GetName()
     local scrollBar = name and _G[name .. "ScrollBar"]
-    if not scrollBar or scrollBar.asElvUISkinned then return end
+    if not scrollBar then return end
+    if scrollBar.asElvUISkinned then return end
 
     local skins = self:GetElvUISkinModule()
     TryMethod(skins, "HandleScrollBar", scrollBar)
