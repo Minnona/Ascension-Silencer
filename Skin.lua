@@ -1,7 +1,6 @@
 local AS = AscensionSilencer
 
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8x8"
-local CHECK_TEXTURE = "Interface\\Buttons\\UI-CheckBox-Check"
 
 local function ReadColor(value, fallbackR, fallbackG, fallbackB, fallbackA)
     if type(value) == "table" then
@@ -51,13 +50,13 @@ local function IsInsideScrollFrame(frame)
 end
 
 local function UpdateManagedCheckBox(checkBox)
-    local mark = checkBox and checkBox.asManagedCheckMark
-    if not mark then return end
+    local fill = checkBox and checkBox.asManagedCheckFill
+    if not fill then return end
 
     if checkBox:GetChecked() then
-        mark:Show()
+        fill:Show()
     else
-        mark:Hide()
+        fill:Hide()
     end
 end
 
@@ -83,17 +82,13 @@ local function SkinManagedCheckBox(checkBox, theme)
             edgeSize = 1,
             insets = { left = 1, right = 1, top = 1, bottom = 1 },
         })
-        indicator:SetBackdropColor(theme.backdrop[1], theme.backdrop[2], theme.backdrop[3], 0.95)
-        indicator:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
 
-        local mark = indicator:CreateTexture(nil, "OVERLAY")
-        mark:SetTexture(CHECK_TEXTURE)
-        mark:SetPoint("TOPLEFT", indicator, "TOPLEFT", -2, 2)
-        mark:SetPoint("BOTTOMRIGHT", indicator, "BOTTOMRIGHT", 2, -2)
-        mark:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4])
+        local fill = indicator:CreateTexture(nil, "ARTWORK")
+        fill:SetPoint("TOPLEFT", indicator, "TOPLEFT", 2, -2)
+        fill:SetPoint("BOTTOMRIGHT", indicator, "BOTTOMRIGHT", -2, 2)
 
         checkBox.asManagedCheckBox = indicator
-        checkBox.asManagedCheckMark = mark
+        checkBox.asManagedCheckFill = fill
         checkBox:HookScript("OnClick", UpdateManagedCheckBox)
         checkBox:HookScript("OnShow", UpdateManagedCheckBox)
 
@@ -109,6 +104,17 @@ local function SkinManagedCheckBox(checkBox, theme)
                 UpdateManagedCheckBox(self)
             end
         end
+    end
+
+    local indicator = checkBox.asManagedCheckBox
+    local fill = checkBox.asManagedCheckFill
+    if indicator then
+        indicator:SetBackdropColor(theme.backdrop[1], theme.backdrop[2], theme.backdrop[3], 0.95)
+        indicator:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
+    end
+    if fill then
+        fill:SetTexture(theme.blankTex)
+        fill:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4])
     end
 
     UpdateManagedCheckBox(checkBox)
