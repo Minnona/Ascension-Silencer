@@ -11,11 +11,40 @@ local module = {
     },
 }
 
+local RECRUIT_PHRASES = {
+    "recruiting", "recruitment", "now recruiting", "is recruiting", "are recruiting",
+}
+
+local MEMBER_SEARCH_PHRASES = {
+    "looking for more members", "looking for members", "seeking more members", "seeking members",
+    "searching for more members", "searching for members", "welcoming new members",
+}
+
+local JOIN_PHRASES = {
+    "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite",
+    "come be part", "come be a part", "be part of the journey", "become part of",
+    "come chill with", "come hang with", "come play with",
+}
+
+local GUILD_TERMS = { "guild", "community", "family" }
+
+local ACTIVITY_PHRASES = {
+    "active members", "active guild", "weekly raids", "raid team", "pve and pvp", "pvp and pve",
+    "social guild", "leveling guild", "fresh guild", "new guild", "independent guild",
+    "progress through pve", "progress through pvp", "high risk", "mythics",
+}
+
+local PROMOTION_PHRASES = {
+    "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
+    "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
+    "all experience levels", "players of all experience", "active discord", "active discord and chat", "active chat",
+}
+
 local function AddMatch(matches, label)
     for _, existing in ipairs(matches) do
         if existing == label then return end
     end
-    table.insert(matches, label)
+    matches[#matches + 1] = label
 end
 
 local function HasAny(text, values)
@@ -35,52 +64,37 @@ function module:Evaluate(context)
         AddMatch(matches, "guild tag")
     end
 
-    local recruit = HasAny(text, { "recruiting", "recruitment", "now recruiting", "is recruiting", "are recruiting" })
+    local recruit = HasAny(text, RECRUIT_PHRASES)
     if recruit then
         score = score + 4
         AddMatch(matches, recruit)
     end
 
-    local memberSearch = HasAny(text, {
-        "looking for more members", "looking for members", "seeking more members", "seeking members",
-        "searching for more members", "searching for members", "welcoming new members",
-    })
+    local memberSearch = HasAny(text, MEMBER_SEARCH_PHRASES)
     if memberSearch then
         score = score + 5
         AddMatch(matches, memberSearch)
     end
 
-    local join = HasAny(text, {
-        "join us", "join our", "come join", "apply now", "whisper for invite", "pm for invite", "message for invite",
-        "come be part", "come be a part", "be part of the journey", "become part of",
-        "come chill with", "come hang with", "come play with",
-    })
+    local join = HasAny(text, JOIN_PHRASES)
     if join then
         score = score + 3
         AddMatch(matches, join)
     end
 
-    local guild = HasAny(text, { "guild", "community", "family" })
+    local guild = HasAny(text, GUILD_TERMS)
     if guild then
         score = score + 1
         AddMatch(matches, guild)
     end
 
-    local activity = HasAny(text, {
-        "active members", "active guild", "weekly raids", "raid team", "pve and pvp", "pvp and pve",
-        "social guild", "leveling guild", "fresh guild", "new guild", "independent guild",
-        "progress through pve", "progress through pvp", "high risk", "mythics",
-    })
+    local activity = HasAny(text, ACTIVITY_PHRASES)
     if activity then
         score = score + 2
         AddMatch(matches, activity)
     end
 
-    local promotion = HasAny(text, {
-        "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
-        "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
-        "all experience levels", "players of all experience", "active discord", "active discord and chat", "active chat",
-    })
+    local promotion = HasAny(text, PROMOTION_PHRASES)
     if promotion then
         score = score + 2
         AddMatch(matches, promotion)
