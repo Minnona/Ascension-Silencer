@@ -18,4 +18,11 @@ return {
     { message = "GUILD MAS ESPAÑOLA QUE FRANCO WHISP NO LATAM NO PANCHO", blocked = true, module = "NonEnglish" },
     { message = "selam", blocked = false },
     { message = "LFM tank and healer for BRD", blocked = false },
+
+    -- Channel Hygiene scenarios require channel/sender state in the test harness.
+    { message = "WTS Arcane Crystal 20g", sender = "Seller", channel = "General", blocked = true, module = "ChannelHygiene" },
+    { message = "WTS Arcane Crystal 20g", sender = "Seller", channel = "Trade", blocked = false },
+    { message = "LFM tank for BRD", sender = "Leader", channel = "Trade", blocked = true, module = "ChannelHygiene" },
+    { message = "LFM tank for BRD", sender = "Leader", channel = "Ascension", blocked = false },
+    { message = "LFM tank for BRD", sender = "Leader", channel = "Newcomers", blocked = true, module = "ChannelHygiene", repeated = true },
 }
