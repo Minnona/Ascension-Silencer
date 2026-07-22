@@ -37,13 +37,16 @@ local ACTIVITY_PHRASES = {
     "chill dad guild", "dad guild", "still raiding",
     "pvp leveling focused guild", "pvp leveling guild", "leveling focused guild",
     "share the experience", "make some new homies",
+    "newly formed guild", "eu based guild", "chill community", "community of players",
+    "explore end game content", "explore endgame content", "dungeons and raids",
 }
 
 local PROMOTION_PHRASES = {
-    "discord", "events", "giveaways", "all are welcome", "everyone welcome", "accepting all", "spots available",
-    "new players and veterans", "new players welcome", "veterans welcome", "veterans alike are welcome",
-    "all experience levels", "players of all experience", "active discord", "active discord and chat", "active chat",
-    "leave the drama", "no drama", "highly encouraged", "dwarves highly encouraged",
+    "discord", "events", "giveaways", "all are welcome", "everyone welcome", "everyone is welcome",
+    "accepting all", "spots available", "new players and veterans", "new players welcome",
+    "veterans welcome", "veterans alike are welcome", "all experience levels", "players of all experience",
+    "active discord", "active discord and chat", "active chat", "leave the drama", "no drama",
+    "highly encouraged", "dwarves highly encouraged", "pm for more info", "whisper for more info",
 }
 
 local function AddMatch(matches, label)
