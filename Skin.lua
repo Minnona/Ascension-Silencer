@@ -30,12 +30,8 @@ end
 
 function AS:GetElvUIEngine()
     local E = nil
-    if type(_G.ElvUI) == "table" then
-        E = _G.ElvUI[1]
-    end
-    if not E and type(_G.E) == "table" then
-        E = _G.E
-    end
+    if type(_G.ElvUI) == "table" then E = _G.ElvUI[1] end
+    if not E and type(_G.E) == "table" then E = _G.E end
     return E
 end
 
@@ -91,30 +87,25 @@ function AS:ApplyThemeBackdrop(frame, alphaMultiplier)
 end
 
 function AS:SkinPanel(panel)
-    if not panel or not self:IsElvUIAvailable() then return end
-    if panel.asElvUISkinned then return end
+    if not panel or not self:IsElvUIAvailable() or panel.asElvUISkinned then return end
 
     local native = false
     if type(panel.StripTextures) == "function" then pcall(panel.StripTextures, panel) end
     if type(panel.CreateBackdrop) == "function" then
         native = pcall(panel.CreateBackdrop, panel, "Transparent")
     end
-    if not native then
-        self:ApplyThemeBackdrop(panel, 0.94)
-    end
-
+    if not native then self:ApplyThemeBackdrop(panel, 0.94) end
     panel.asElvUISkinned = true
 end
 
 function AS:SkinCard(card)
-    if not card or not self:IsElvUIAvailable() then return end
+    if not card or not self:IsElvUIAvailable() or card.asElvUISkinned then return end
     self:ApplyThemeBackdrop(card, 0.58)
     card.asElvUISkinned = true
 end
 
 function AS:SkinButton(button)
-    if not button or not self:IsElvUIAvailable() then return end
-    if button.asElvUISkinned then return end
+    if not button or not self:IsElvUIAvailable() or button.asElvUISkinned then return end
 
     local skins = self:GetElvUISkinModule()
     local handled = TryMethod(skins, "HandleButton", button)
@@ -152,7 +143,7 @@ function AS:SkinCheckBox(checkBox)
 end
 
 function AS:SkinSlider(slider)
-    if not slider or not self:IsElvUIAvailable() then return end
+    if not slider or not self:IsElvUIAvailable() or slider.asElvUISkinned then return end
 
     local theme = self:GetElvUITheme()
     local thumb = slider.GetThumbTexture and slider:GetThumbTexture()
@@ -201,15 +192,11 @@ function AS:SkinSlider(slider)
 end
 
 function AS:SkinEditBox(editBox)
-    if not editBox or not self:IsElvUIAvailable() then return end
-    if editBox.asElvUISkinned then return end
+    if not editBox or not self:IsElvUIAvailable() or editBox.asElvUISkinned then return end
 
     local skins = self:GetElvUISkinModule()
     local handled = TryMethod(skins, "HandleEditBox", editBox)
-    if not handled then
-        self:ApplyThemeBackdrop(editBox, 0.82)
-    end
-
+    if not handled then self:ApplyThemeBackdrop(editBox, 0.82) end
     editBox.asElvUISkinned = true
 end
 
@@ -217,8 +204,7 @@ function AS:SkinScrollFrame(scrollFrame)
     if not scrollFrame or not self:IsElvUIAvailable() then return end
     local name = scrollFrame.GetName and scrollFrame:GetName()
     local scrollBar = name and _G[name .. "ScrollBar"]
-    if not scrollBar then return end
-    if scrollBar.asElvUISkinned then return end
+    if not scrollBar or scrollBar.asElvUISkinned then return end
 
     local skins = self:GetElvUISkinModule()
     TryMethod(skins, "HandleScrollBar", scrollBar)
