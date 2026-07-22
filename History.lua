@@ -20,10 +20,6 @@ function AS:GetHistoryEntry(displayIndex)
 end
 
 function AS:RefreshVisibleHistoryUI()
-    local now = GetTime and GetTime() or 0
-    if self.lastHistoryUIRefresh and (now - self.lastHistoryUIRefresh) < 0.20 then return end
-    self.lastHistoryUIRefresh = now
-
     if self.optionsPanel and self.optionsPanel:IsVisible() and self.statusText then
         local state = self.db and self.db.enabled and "|cff55ff55Enabled|r" or "|cffff5555Disabled|r"
         self.statusText:SetText("Status: " .. state .. "   Blocked this session: " .. tostring(self.sessionStats.total or 0))
@@ -53,7 +49,6 @@ function AS:ClearHistory()
     self.history = {}
     self.historyCount = 0
     self.historyNext = 1
-    self.lastHistoryUIRefresh = nil
     if self.RefreshReviewPanel then self:RefreshReviewPanel() end
 end
 
