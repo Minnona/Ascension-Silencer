@@ -13,9 +13,7 @@ local function DecodeUTF8(text, position)
     local first = string.byte(text, position)
     if not first then return nil, position + 1 end
 
-    if first < 0x80 then
-        return first, position + 1
-    end
+    if first < 0x80 then return first, position + 1 end
 
     local second = string.byte(text, position + 1)
     if first < 0xE0 and second then
@@ -100,16 +98,21 @@ function AS:EnsureScriptAnalysis(context)
         cjk = 0,
         hangul = 0,
     }
-
+    local nonAsciiChars = {}
     local totalLetters = 0
     local text = context.searchText or ""
     local position = 1
     local length = string.len(text)
 
     while position <= length do
+        local startPosition = position
         local codepoint
         codepoint, position = DecodeUTF8(text, position)
         if codepoint then
+            if codepoint >= 0x80 then
+                nonAsciiChars[string.sub(text, startPosition, position - 1)] = true
+            end
+
             local script = ClassifyCodepoint(codepoint)
             if script then
                 scripts[script] = scripts[script] + 1
@@ -120,6 +123,7 @@ function AS:EnsureScriptAnalysis(context)
 
     context.scripts = scripts
     context.totalLetters = totalLetters
+    context.nonAsciiChars = nonAsciiChars
     return scripts, totalLetters
 end
 
