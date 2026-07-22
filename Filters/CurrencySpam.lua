@@ -41,10 +41,6 @@ function module:Evaluate(context)
     if not transaction then
         transaction = HasAny(text, { "want to sell", "want to buy", "for sale", "paying gold", "selling for gold", "buying for gold" })
     end
-    if transaction then
-        score = score + 4
-        AddMatch(matches, transaction)
-    end
 
     local hasDP = context.tokenSet.dp
         or string.find(text, "donation point", 1, true)
@@ -58,6 +54,22 @@ function module:Evaluate(context)
         or (transaction and string.find(text, "%d+%s*baz[%s%p]"))
         or (transaction and (context.tokenSet.bazaar or context.tokenSet.bazar))
         or (transaction and context.tokenSet.baz and (context.tokenSet.token or context.tokenSet.tokens))
+
+    -- Transaction language, a gold price and contact instructions are common in
+    -- ordinary item sales. This module must never block unless its actual
+    -- currencies are present.
+    if not hasDP and not hasBazaar then
+        return {
+            score = 0,
+            reason = "No Donation Points or Bazaar Tokens detected",
+            matches = {},
+        }
+    end
+
+    if transaction then
+        score = score + 4
+        AddMatch(matches, transaction)
+    end
 
     if hasDP then
         score = score + 4
