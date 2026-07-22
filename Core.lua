@@ -5,7 +5,7 @@ _G.AscensionSilencer = AS
 
 AS.addonName = ADDON_NAME or "AscensionSilencer"
 AS.displayName = "Ascension Silencer"
-AS.version = "0.1.0"
+AS.version = "0.1.1"
 AS.schemaVersion = 1
 AS.modules = {}
 AS.moduleOrder = {}
@@ -241,9 +241,12 @@ AS:SetScript("OnEvent", function(self, event, ...)
         local loadedAddon = ...
         if loadedAddon == self.addonName then
             self:Initialize()
+        elseif loadedAddon == "ElvUI" and self.ready and self.ApplyOptionsSkin then
+            self:ApplyOptionsSkin()
         end
     elseif event == "PLAYER_LOGIN" then
         self:RefreshSocialCaches()
+        if self.ApplyOptionsSkin then self:ApplyOptionsSkin() end
     elseif event == "FRIENDLIST_UPDATE" then
         self:RefreshFriendCache()
     elseif event == "GUILD_ROSTER_UPDATE" then
