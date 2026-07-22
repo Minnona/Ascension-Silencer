@@ -12,11 +12,16 @@ local module = {
     },
 }
 
+local DIRECT_LINKS = { "twitch.tv/", "www.twitch.tv/", "kick.com/", "youtube.com/live/" }
+local LIVE_PHRASES = { "live now", "going live", "currently live", "streaming now", "i am live", "i'm live" }
+local CALL_TO_ACTION_PHRASES = { "come watch", "come hang out", "watch me", "follow my stream", "drop a follow", "check out my stream", "join the stream" }
+local PROMOTION_PHRASES = { "drops enabled", "road to affiliate", "road to partner", "viewer games", "stream giveaway", "giveaway on stream" }
+
 local function AddMatch(matches, label)
     for _, existing in ipairs(matches) do
         if existing == label then return end
     end
-    table.insert(matches, label)
+    matches[#matches + 1] = label
 end
 
 local function HasAny(text, values)
@@ -35,10 +40,7 @@ function module:Evaluate(context, moduleDB)
         or string.find(text, "/clip/", 1, true)
         or string.find(text, "twitch.tv/clip", 1, true)
 
-    local directLink = HasAny(text, {
-        "twitch.tv/", "www.twitch.tv/", "kick.com/", "youtube.com/live/",
-    })
-
+    local directLink = HasAny(text, DIRECT_LINKS)
     if directLink and not (isClip and moduleDB.allowClips) then
         score = score + 6
         AddMatch(matches, directLink)
@@ -46,19 +48,19 @@ function module:Evaluate(context, moduleDB)
         AddMatch(matches, "allowed Twitch clip")
     end
 
-    local live = HasAny(text, { "live now", "going live", "currently live", "streaming now", "i am live", "i'm live" })
+    local live = HasAny(text, LIVE_PHRASES)
     if live then
         score = score + 3
         AddMatch(matches, live)
     end
 
-    local callToAction = HasAny(text, { "come watch", "come hang out", "watch me", "follow my stream", "drop a follow", "check out my stream", "join the stream" })
+    local callToAction = HasAny(text, CALL_TO_ACTION_PHRASES)
     if callToAction then
         score = score + 3
         AddMatch(matches, callToAction)
     end
 
-    local promotion = HasAny(text, { "drops enabled", "road to affiliate", "road to partner", "viewer games", "stream giveaway", "giveaway on stream" })
+    local promotion = HasAny(text, PROMOTION_PHRASES)
     if promotion then
         score = score + 2
         AddMatch(matches, promotion)
