@@ -2,6 +2,12 @@
 
 Ascension Silencer is a configurable chat filter for Project Ascension.
 
+## Download
+
+[**Download the latest AscensionSilencer.zip**](https://github.com/Minnona/Ascension-Silencer/releases/latest/download/AscensionSilencer.zip)
+
+The release ZIP already contains the correctly named `AscensionSilencer` folder. Do not download GitHub's automatically generated **Source code** archives.
+
 It can filter:
 
 - Guild recruitment advertisements
@@ -39,8 +45,8 @@ All settings are also available under **Interface → AddOns → Ascension Silen
 
 ### Windows
 
-1. Download and extract the addon.
-2. Place the `AscensionSilencer` folder inside:
+1. Download `AscensionSilencer.zip` from the Releases section.
+2. Extract it into:
 
 ```text
 C:\AscensionWoW\resources\ascension-live\Interface\AddOns\
@@ -54,8 +60,8 @@ C:\AscensionWoW\resources\ascension-live\Interface\AddOns\AscensionSilencer\
 
 ### Linux
 
-1. Download and extract the addon.
-2. Place the `AscensionSilencer` folder inside:
+1. Download `AscensionSilencer.zip` from the Releases section.
+2. Extract it into:
 
 ```text
 ~/AscensionWoW/resources/ascension-live/Interface/AddOns/
@@ -68,6 +74,10 @@ The final folder should be:
 ```
 
 Use the location of your own AscensionWoW folder if it is installed elsewhere.
+
+## Releases
+
+Changing `## Version` in `AscensionSilencer.toc` on `main` automatically builds the correctly structured ZIP and publishes a matching GitHub Release.
 
 ## License
 
