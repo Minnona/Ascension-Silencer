@@ -1,6 +1,6 @@
 local AS = AscensionSilencer
 
-AS.version = "0.3.3"
+AS.version = "0.3.5"
 AS.schemaVersion = 2
 AS.hygieneHistory = AS.hygieneHistory or {}
 AS.hygieneMessageCounter = 0
