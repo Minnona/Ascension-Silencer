@@ -61,8 +61,13 @@ function AS:EvaluateChatMessage(message, sender, event, ...)
     context.sender = sender or "Unknown"
     context.event = event
     context.channel = self:GetChannelLabel(event, ...)
+    context.channelIndex = tonumber(select(6, ...))
+    context.channelBaseName = select(7, ...)
 
     local result = self:EvaluateContext(context)
+    if not result and self.EvaluateChannelHygiene then
+        result = self:EvaluateChannelHygiene(context)
+    end
     if not result then return false end
 
     local now = GetTime and GetTime() or 0
