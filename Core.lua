@@ -5,7 +5,7 @@ _G.AscensionSilencer = AS
 
 AS.addonName = ADDON_NAME or "AscensionSilencer"
 AS.displayName = "Ascension Silencer"
-AS.version = "0.2.3"
+AS.version = "0.3.0"
 AS.schemaVersion = 2
 AS.modules = {}
 AS.moduleOrder = {}
@@ -52,7 +52,7 @@ function AS:RegisterModule(key, module)
     if not key or type(module) ~= "table" or self.modules[key] then return end
     module.key = key
     self.modules[key] = module
-    table.insert(self.moduleOrder, key)
+    self.moduleOrder[#self.moduleOrder + 1] = key
     self.filterEvaluationOrder = nil
 end
 
@@ -109,7 +109,7 @@ function AS:RebuildExceptionCache()
     for _, phrase in ipairs(exceptions.phrases or {}) do
         phrase = string.lower(self:Trim(phrase))
         if phrase ~= "" then
-            table.insert(cache.phrases, phrase)
+            cache.phrases[#cache.phrases + 1] = phrase
             cache.hasPhrases = true
         end
     end
@@ -118,20 +118,21 @@ function AS:RebuildExceptionCache()
 end
 
 function AS:RefreshFriendCache()
-    self.cache.friends = {}
-    if not GetNumFriends or not GetFriendInfo then return end
-
-    for index = 1, (GetNumFriends() or 0) do
-        local name = GetFriendInfo(index)
-        if name then
-            self.cache.friends[self:CanonicalName(name)] = true
+    local friends = {}
+    if GetNumFriends and GetFriendInfo then
+        for index = 1, (GetNumFriends() or 0) do
+            local name = GetFriendInfo(index)
+            if name then friends[self:CanonicalName(name)] = true end
         end
     end
+    self.cache.friends = friends
 end
 
 function AS:RebuildGuildCache()
-    self.cache.guild = {}
-    if not IsInGuild or not IsInGuild() then return end
+    if not IsInGuild or not IsInGuild() then
+        self.cache.guild = {}
+        return
+    end
     if not GetNumGuildMembers or not GetGuildRosterInfo then return end
 
     local now = GetTime and GetTime() or 0
@@ -140,13 +141,13 @@ function AS:RebuildGuildCache()
 
     -- Only online guild members can send chat messages, so offline roster entries
     -- are unnecessary for the sender exception cache.
+    local guild = {}
     local count = GetNumGuildMembers(false) or 0
     for index = 1, count do
         local name = GetGuildRosterInfo(index)
-        if name then
-            self.cache.guild[self:CanonicalName(name)] = true
-        end
+        if name then guild[self:CanonicalName(name)] = true end
     end
+    self.cache.guild = guild
 end
 
 function AS:RequestGuildRoster(force)
@@ -162,26 +163,22 @@ function AS:RequestGuildRoster(force)
 end
 
 function AS:RefreshGroupCache()
-    self.cache.group = {}
+    local group = {}
 
     local function AddUnit(unit)
         if UnitExists and UnitExists(unit) and UnitName then
             local name = UnitName(unit)
-            if name then
-                AS.cache.group[AS:CanonicalName(name)] = true
-            end
+            if name then group[AS:CanonicalName(name)] = true end
         end
     end
 
     if GetNumRaidMembers and (GetNumRaidMembers() or 0) > 0 then
-        for index = 1, GetNumRaidMembers() do
-            AddUnit("raid" .. index)
-        end
+        for index = 1, GetNumRaidMembers() do AddUnit("raid" .. index) end
     elseif GetNumPartyMembers then
-        for index = 1, (GetNumPartyMembers() or 0) do
-            AddUnit("party" .. index)
-        end
+        for index = 1, (GetNumPartyMembers() or 0) do AddUnit("party" .. index) end
     end
+
+    self.cache.group = group
 end
 
 function AS:RefreshSocialCaches()
@@ -214,15 +211,12 @@ function AS:IsSenderExcepted(sender, message, senderKey)
     if exceptions.allowSelf ~= false and senderKey ~= "" and senderKey == self.cache.player then
         return true, "own message"
     end
-
     if exceptions.allowFriends ~= false and self.cache.friends[senderKey] then
         return true, "friend"
     end
-
     if exceptions.allowGuild ~= false and self.cache.guild[senderKey] then
         return true, "guild member"
     end
-
     if exceptions.allowGroup ~= false and self.cache.group[senderKey] then
         return true, "group member"
     end
@@ -249,18 +243,12 @@ function AS:GetChannelLabel(event, ...)
     if event == "CHAT_MSG_YELL" then return "Yell" end
 
     local channelString = select(2, ...)
-    if channelString and channelString ~= "" then
-        return tostring(channelString)
-    end
-
+    if channelString and channelString ~= "" then return tostring(channelString) end
     return "Public channel"
 end
 
 function AS:ChatFilter(frame, event, message, sender, ...)
-    if not self.ready or not self:IsChannelEnabled(event) then
-        return false
-    end
-
+    if not self.ready or not self:IsChannelEnabled(event) then return false end
     local blocked = self:EvaluateChatMessage(message, sender, event, ...)
     return blocked and true or false
 end
@@ -305,13 +293,13 @@ AS:SetScript("OnEvent", function(self, event, ...)
     elseif event == "FRIENDLIST_UPDATE" then
         self:RefreshFriendCache()
     elseif event == "GUILD_ROSTER_UPDATE" then
-        -- Read the roster only. Requesting it from this event creates a feedback loop.
+        -- Read the roster only. Requesting it here creates a feedback loop.
         self:RebuildGuildCache()
     elseif event == "PLAYER_GUILD_UPDATE" then
         local unit = ...
         if not unit or unit == "player" then
             self:RebuildGuildCache()
-            self:RequestGuildRoster(true)
+            self:RequestGuildRoster(false)
         end
     elseif event == "GROUP_ROSTER_UPDATE" or event == "RAID_ROSTER_UPDATE" or event == "PARTY_MEMBERS_CHANGED" then
         self:RefreshGroupCache()
@@ -329,7 +317,5 @@ pcall(AS.RegisterEvent, AS, "PLAYER_GUILD_UPDATE")
 
 SLASH_ASCENSIONSILENCER1 = "/as"
 SlashCmdList["ASCENSIONSILENCER"] = function()
-    if AS.OpenOptions then
-        AS:OpenOptions()
-    end
+    if AS.OpenOptions then AS:OpenOptions() end
 end
