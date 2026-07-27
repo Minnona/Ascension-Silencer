@@ -68,4 +68,7 @@ return {
     { message = "LFM tank for BRD", sender = "Leader", channel = "Trade", blocked = true, module = "ChannelHygiene" },
     { message = "LFM tank for BRD", sender = "Leader", channel = "Ascension", blocked = false },
     { message = "LFM tank for BRD", sender = "Leader", channel = "Newcomers", blocked = true, module = "ChannelHygiene", repeated = true },
+    { message = "YACHOOOOOOOOOOOO", sender = "Shouter", channel = "Newcomers", blocked = false },
+    { message = "YACHOOOOOOOOOOOOOOOOOO", sender = "Shouter", channel = "Newcomers", blocked = true, module = "ChannelHygiene", repeated = true },
+    { message = "Congratulations", sender = "Friendly", channel = "Newcomers", blocked = false },
 }
