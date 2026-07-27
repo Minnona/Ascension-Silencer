@@ -47,6 +47,8 @@ local ACTIVITY_PHRASES = {
     "explore end game content", "explore endgame content", "dungeons and raids",
     "end game raids", "endgame raids", "structured pvp",
     "active leadership", "experienced leadership", "mature leadership",
+    "previous bb realm first", "realm first", "for main raid", "main raid",
+    "building groups for", "building groups", "groups for dungeons", "raids and pvp",
 }
 
 local PROMOTION_PHRASES = {
@@ -55,7 +57,13 @@ local PROMOTION_PHRASES = {
     "veterans welcome", "veterans alike are welcome", "all experience levels", "players of all experience",
     "active discord", "active discord and chat", "active chat", "leave the drama", "no drama",
     "highly encouraged", "dwarves highly encouraged", "pm for more info", "whisper for more info",
-    "more info or an invite", "info or an invite",
+    "more info or an invite", "info or an invite", "welcomes everyone", "fresh newbies",
+    "experienced sweats", "help your mates", "have a crack",
+}
+
+local ROLE_RECRUIT_TERMS = {
+    "inspiration", "ancestry", "godblade", "runemaster", "pyro", "inventor",
+    "chronomancer", "tinker", "support spec", "witch hunter",
 }
 
 local function AddMatch(matches, label)
@@ -70,6 +78,16 @@ local function HasAny(text, values)
         if string.find(text, value, 1, true) then return value end
     end
     return nil
+end
+
+local function CountTerms(text, values)
+    local count = 0
+    for _, value in ipairs(values) do
+        if string.find(text, value, 1, true) then
+            count = count + 1
+        end
+    end
+    return count
 end
 
 function module:Evaluate(context)
@@ -116,6 +134,19 @@ function module:Evaluate(context)
     if promotion then
         score = score + 2
         AddMatch(matches, promotion)
+    end
+
+    local tokenSet = context.tokenSet or {}
+    local roleCount = CountTerms(text, ROLE_RECRUIT_TERMS)
+    local raidRecruitContext = string.find(text, "main raid", 1, true)
+        or string.find(text, "realm first", 1, true)
+        or string.find(text, "discord", 1, true)
+        or string.find(text, "na raid", 1, true)
+        or string.find(text, "eu raid", 1, true)
+
+    if tokenSet.lf and roleCount >= 2 and raidRecruitContext then
+        score = score + 5
+        AddMatch(matches, "raid role recruitment")
     end
 
     if string.find(text, "looking for a guild", 1, true)
