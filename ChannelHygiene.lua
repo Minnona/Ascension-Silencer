@@ -1,6 +1,6 @@
 local AS = AscensionSilencer
 
-AS.version = "0.3.5"
+AS.version = "0.3.15"
 AS.schemaVersion = 2
 AS.hygieneHistory = AS.hygieneHistory or {}
 AS.hygieneMessageCounter = 0
@@ -176,10 +176,25 @@ function AS:IsLFGMessage(context)
     return ContainsAny(context.searchText or "", LFG_PHRASES) and true or false
 end
 
+local function CanonicalizeRepeatSignature(signature)
+    -- Preserve normal double letters while collapsing exaggerated runs. This makes
+    -- YACHOOOOOO and YACHOOOOOOOO share one signature without fuzzy matching.
+    local canonical = string.gsub(signature, "([%a])%1%1+", "%1%1")
+    return canonical, canonical ~= signature
+end
+
 function AS:GetHygieneSignature(context)
     local signature = tostring(context.text or "")
-    if string.len(signature) < 8 or (context.tokenCount or 0) < 2 then return nil end
-    return signature
+    local tokenCount = tonumber(context.tokenCount) or 0
+    if string.len(signature) < 8 or tokenCount < 1 then return nil end
+
+    local canonical, hadElongatedRun = CanonicalizeRepeatSignature(signature)
+
+    -- Ordinary one-word replies remain exempt. Long single-word noise with an
+    -- exaggerated letter run is tracked and throttled like any other repeat.
+    if tokenCount < 2 and not hadElongatedRun then return nil end
+
+    return canonical
 end
 
 function AS:EvaluateChannelHygiene(context)
