@@ -2,7 +2,7 @@
 ## Title: Ascension Silencer
 ## Notes: Modular public chat filter for Project Ascension.
 ## Author: Minn
-## Version: 0.3.15
+## Version: 0.3.16
 ## SavedVariables: AscensionSilencerDB
 
 Core.lua
@@ -18,6 +18,7 @@ Data\PolishRecruitment.lua
 Data\DutchRecruitment.lua
 Data\FrenchRecruitment.lua
 Data\PortugueseRecruitment.lua
+Data\SpanishConversation.lua
 Filters\GuildRecruitment.lua
 Filters\CurrencySpam.lua
 Filters\StreamAdvertising.lua
