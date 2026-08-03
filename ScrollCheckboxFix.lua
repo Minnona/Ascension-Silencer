@@ -1,7 +1,7 @@
 local AS = AscensionSilencer
 AS.version = "0.3.17"
 
-local WHITE_TEXTURE = "Interface\Buttons\WHITE8x8"
+local WHITE_TEXTURE = [[Interface\Buttons\WHITE8x8]]
 
 local function IsInsideScrollFrame(frame)
     local parent = frame and frame.GetParent and frame:GetParent()
