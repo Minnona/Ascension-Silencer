@@ -45,9 +45,12 @@ function module:Evaluate(context)
     local transaction = HasToken(context, TRANSACTION_TOKENS)
     if not transaction then transaction = HasAny(text, TRANSACTION_PHRASES) end
 
+    -- tokenSet.dp handles standalone DP. The compact-number pattern supports
+    -- forms such as 100DP while requiring a real boundary after "dp", so
+    -- raid text such as "19 dps" cannot be mistaken for Donation Points.
     local hasDP = context.tokenSet.dp
         or string.find(text, "donation point", 1, true)
-        or string.find(text, "%d+%s*dp")
+        or string.find(text .. " ", "%d+%s*dp[%s%p]")
 
     local hasBazaar = string.find(text, "bazaar token", 1, true)
         or string.find(text, "bazar token", 1, true)
@@ -84,7 +87,11 @@ function module:Evaluate(context)
     end
 
     local rate = HasAny(text, RATE_PHRASES)
-    if rate or string.find(text, "%d+%s*[:/]%s*%d+") then
+    -- Generic x/y ratios are only useful as trade evidence when the message
+    -- already contains a transaction signal. This avoids treating raid roster
+    -- counts such as 22/25 or 2/2 as exchange rates.
+    local numericRate = transaction and string.find(text, "%d+%s*[:/]%s*%d+")
+    if rate or numericRate then
         score = score + 2
         AddMatch(matches, rate or "exchange rate")
     end
