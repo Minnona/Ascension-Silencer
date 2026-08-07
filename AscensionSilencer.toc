@@ -27,3 +27,4 @@ Filters\NonEnglish.lua
 Skin.lua
 UI.lua
 ScrollCheckboxFix.lua
+ConfidenceDiagnostics.lua
