@@ -1,5 +1,5 @@
 local AS = AscensionSilencer
-AS.version = "0.3.18"
+AS.version = "0.3.19"
 
 local WHITE_TEXTURE = [[Interface\Buttons\WHITE8x8]]
 

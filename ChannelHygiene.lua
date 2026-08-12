@@ -61,9 +61,7 @@ local function GetMaximumAge(settings)
     ) + 30
 end
 
-local function PruneSenderSignatures(senderRecord, now, maxAge)
-    local signatures = senderRecord.signatures or {}
-    senderRecord.signatures = signatures
+local function PruneSignatureMap(signatures, now, maxAge)
     local count = 0
 
     for signature, entry in pairs(signatures) do
@@ -90,6 +88,16 @@ local function PruneSenderSignatures(senderRecord, now, maxAge)
     end
 
     return count
+end
+
+local function PruneSenderSignatures(senderRecord, now, maxAge)
+    local signatures = senderRecord.signatures or {}
+    local crossChannelSignatures = senderRecord.crossChannelSignatures or {}
+    senderRecord.signatures = signatures
+    senderRecord.crossChannelSignatures = crossChannelSignatures
+
+    return PruneSignatureMap(signatures, now, maxAge)
+        + PruneSignatureMap(crossChannelSignatures, now, maxAge)
 end
 
 function AS:PruneHygieneHistory(now, settings)
@@ -197,6 +205,24 @@ function AS:GetHygieneSignature(context)
     return canonical
 end
 
+function AS:GetCrossChannelHygieneSignature(context)
+    local tokens = context.tokens or {}
+    local signatureTokens = {}
+
+    -- Counts commonly change between copies of the same LFG or advertisement.
+    -- Ignore standalone numeric counters only for cross-channel comparison;
+    -- same-channel repeat throttling retains the exact numbers.
+    for _, token in ipairs(tokens) do
+        if not string.find(token, "^%d+$") then
+            signatureTokens[#signatureTokens + 1] = token
+        end
+    end
+
+    local signature = table.concat(signatureTokens, " ")
+    if signature == "" then return nil end
+    return CanonicalizeRepeatSignature(signature)
+end
+
 function AS:EvaluateChannelHygiene(context)
     if context.event ~= "CHAT_MSG_CHANNEL" then return nil end
 
@@ -227,25 +253,32 @@ function AS:EvaluateChannelHygiene(context)
     local senderKey = context.senderKey or self:CanonicalName(context.sender or "Unknown")
     local senderRecord = self.hygieneHistory[senderKey]
     if not senderRecord then
-        senderRecord = { lastSeen = now, signatures = {} }
+        senderRecord = { lastSeen = now, signatures = {}, crossChannelSignatures = {} }
         self.hygieneHistory[senderKey] = senderRecord
     end
 
     senderRecord.lastSeen = now
     PruneSenderSignatures(senderRecord, now, GetMaximumAge(settings))
 
-    local previous = senderRecord.signatures[signature]
-    if previous then
-        local elapsed = math.max(0, now - (previous.time or 0))
+    local crossChannelSignature = self:GetCrossChannelHygieneSignature(context)
+    local previousCrossChannel = crossChannelSignature
+        and senderRecord.crossChannelSignatures[crossChannelSignature]
+    if previousCrossChannel then
+        local elapsed = math.max(0, now - (previousCrossChannel.time or 0))
         local duplicateWindow = tonumber(settings.duplicateWindow) or 12
 
         if settings.suppressCrossChannel ~= false
-            and previous.channel ~= context.channel
+            and previousCrossChannel.channel ~= context.channel
             and elapsed < duplicateWindow then
-            return MakeResult("Duplicate of message in " .. tostring(previous.channel or "another channel"), {
+            return MakeResult("Duplicate of message in " .. tostring(previousCrossChannel.channel or "another channel"), {
                 "cross-channel duplicate",
             })
         end
+    end
+
+    local previous = senderRecord.signatures[signature]
+    if previous then
+        local elapsed = math.max(0, now - (previous.time or 0))
 
         if settings.throttleRepeats ~= false then
             local cooldown = self:IsLFGMessage(context)
@@ -266,6 +299,13 @@ function AS:EvaluateChannelHygiene(context)
         channel = context.channel,
         trade = isTrade and true or false,
     }
+    if crossChannelSignature then
+        senderRecord.crossChannelSignatures[crossChannelSignature] = {
+            time = now,
+            channel = context.channel,
+            trade = isTrade and true or false,
+        }
+    end
 
     return nil
 end

@@ -66,6 +66,35 @@ local ROLE_RECRUIT_TERMS = {
     "chronomancer", "tinker", "support spec", "witch hunter",
 }
 
+local MEMBER_SEARCH_TARGETS = {
+    member = true,
+    members = true,
+}
+
+local function FindMemberSearchIntent(tokens)
+    for index, token in ipairs(tokens) do
+        local targetStart
+        if (token == "looking" or token == "searching") and tokens[index + 1] == "for" then
+            targetStart = index + 2
+        elseif token == "seeking" or token == "welcoming" then
+            targetStart = index + 1
+        end
+
+        if targetStart then
+            -- Allow a few descriptive words, such as "new active members",
+            -- without doing fuzzy or unbounded matching in the chat path.
+            local targetEnd = math.min(#tokens, targetStart + 3)
+            for targetIndex = targetStart, targetEnd do
+                if MEMBER_SEARCH_TARGETS[tokens[targetIndex]] then
+                    return "member-seeking intent"
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
 local function AddMatch(matches, label)
     for _, existing in ipairs(matches) do
         if existing == label then return end
@@ -94,8 +123,9 @@ function module:Evaluate(context)
     local text = context.searchText
     local score = 0
     local matches = {}
+    local hasGuildTag = string.find(text, "<[^>]+>") ~= nil
 
-    if string.find(text, "<[^>]+>") then
+    if hasGuildTag then
         score = score + 2
         AddMatch(matches, "guild tag")
     end
@@ -106,7 +136,11 @@ function module:Evaluate(context)
         AddMatch(matches, recruit)
     end
 
+    local guild = HasAny(text, GUILD_TERMS)
     local memberSearch = HasAny(text, MEMBER_SEARCH_PHRASES)
+    if not memberSearch and (hasGuildTag or guild) then
+        memberSearch = FindMemberSearchIntent(context.tokens or {})
+    end
     if memberSearch then
         score = score + 5
         AddMatch(matches, memberSearch)
@@ -118,7 +152,6 @@ function module:Evaluate(context)
         AddMatch(matches, join)
     end
 
-    local guild = HasAny(text, GUILD_TERMS)
     if guild then
         score = score + 1
         AddMatch(matches, guild)
