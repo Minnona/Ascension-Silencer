@@ -189,6 +189,45 @@ AS.Data.languages = {
         },
         chars = { "ä", "ö", "ü", "ß" },
     },
+    Hungarian = {
+        words = {
+            -- Distinctive recruitment and player vocabulary.
+            ["magyar"] = 3, ["céh"] = 3, ["ceh"] = 3,
+            ["keres"] = 3, ["keresi"] = 4, ["keresünk"] = 4, ["keresunk"] = 4,
+            ["várunk"] = 4, ["varunk"] = 4, ["várja"] = 3, ["varja"] = 3,
+            ["tagok"] = 3, ["tagokat"] = 4, ["tagjait"] = 4,
+            ["játékos"] = 3, ["jatekos"] = 3,
+            ["játékosok"] = 3, ["jatekosok"] = 3,
+            ["játékosokat"] = 4, ["jatekosokat"] = 4,
+            ["jelentkezni"] = 4, ["jelentkezés"] = 3, ["jelentkezes"] = 3,
+            ["csatlakozz"] = 4, ["csatlakozni"] = 3,
+            ["hozzánk"] = 3, ["hozzank"] = 3,
+            ["aktív"] = 2, ["aktiv"] = 2,
+            ["szinttől"] = 3, ["szinttol"] = 3,
+            ["függetlenül"] = 3, ["fuggetlenul"] = 3,
+            ["infóért"] = 2, ["infoert"] = 2,
+            ["írj"] = 3, ["irj"] = 3, ["rám"] = 2, ["ram"] = 2,
+            ["valaki"] = 3, ["tudja"] = 2, ["csapat"] = 3, ["csapatba"] = 3,
+
+            -- Low-weight sentence structure; several independent hits are
+            -- required before these can influence a Balanced classification.
+            ["és"] = 1, ["es"] = 1, ["vagy"] = 1, ["hogy"] = 1,
+            ["egy"] = 1, ["az"] = 1, ["de"] = 1, ["nem"] = 1,
+            ["van"] = 1, ["lehet"] = 1, ["minden"] = 1, ["új"] = 1,
+            ["hol"] = 1,
+            ["fo"] = 1, ["fő"] = 2, ["cél"] = 2, ["cel"] = 1,
+        },
+        phrases = {
+            -- Only the strongest matching phrase contributes in NonEnglish.lua.
+            { "tagokat keresünk", 5 }, { "tagokat keresunk", 5 },
+            { "játékosokat keres", 5 }, { "jatekosokat keres", 5 },
+            { "aktív tagokat", 4 }, { "aktiv tagokat", 4 },
+            { "csatlakozz hozzánk", 5 }, { "csatlakozz hozzank", 5 },
+            { "szinttől függetlenül", 5 }, { "szinttol fuggetlenul", 5 },
+            { "jelentkezni lehet", 4 }, { "írj rám", 4 }, { "irj ram", 4 },
+        },
+        chars = { "á", "é", "í", "ó", "ö", "ő", "ú", "ü", "ű" },
+    },
     Italian = {
         words = {
             ["e"] = 1, ["per"] = 1, ["con"] = 1, ["siamo"] = 2, ["cerco"] = 2,

@@ -26,6 +26,15 @@ return {
     { message = "comunidade portuguesa procura membros", blocked = true, module = "NonEnglish" },
     { message = "nederlandse gilde zoekt spelers", blocked = true, module = "NonEnglish" },
 
+    -- Hungarian: normal vocabulary coverage should generalize beyond one ad.
+    { message = "Magyar céh aktív játékosokat keres raidekre", blocked = true, module = "NonEnglish" },
+    { message = "Új tagokat várunk, csatlakozz hozzánk", blocked = true, module = "NonEnglish" },
+    { message = "Valaki tudja, hol lehet jelentkezni a csapatba?", blocked = true, module = "NonEnglish" },
+    { message = "Magyar", blocked = false },
+    { message = "Keresi", blocked = false },
+    { message = "Need aktív DPS for raid", blocked = false },
+    { message = "LF magyar guild", blocked = false },
+
     -- Common WoW vocabulary must not become language evidence by itself.
     { message = "LFM raid tonight need 2 dps and healer", blocked = false },
     { message = "Need group for mythic dungeon, invite please", blocked = false },
