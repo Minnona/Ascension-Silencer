@@ -55,6 +55,7 @@ return {
     { message = "\"Saudade\" Guild PT procura membros para formar a comunidade portuguesa no servidor. /w para invite.", blocked = true, module = "NonEnglish" },
     { message = "<Felpull AB> söker folk till framtida Raids och M+. Socials välkomna också =] Över 500 medlemmar! /w för info", blocked = true, module = "NonEnglish" },
     { message = "<Pumpar i Deadmines> Söker svenska lirare att pumpa raids dungeons med. Kravet är att ha ett glatt humör och njuta av spelet. både vets och nya spelare är välkomna.", blocked = true, module = "NonEnglish" },
+    { message = "<PSZASZ> guild keresi aktív tagjait fo cél a raidek kitakarítása de szinttol függetlenül lehet jelentkezni infóért írj rám", blocked = true, module = "NonEnglish" },
 
     { message = "hola gente", blocked = false },
     { message = "bonjour", blocked = false },
