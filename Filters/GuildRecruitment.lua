@@ -71,6 +71,45 @@ local MEMBER_SEARCH_TARGETS = {
     members = true,
 }
 
+local RECRUIT_INTENT_STARTERS = {
+    aim = true, aiming = true, aims = true,
+    hope = true, hoping = true, hopes = true,
+    look = true, looking = true,
+    plan = true, planning = true, plans = true,
+    seek = true, seeking = true, seeks = true,
+    try = true, trying = true, tries = true,
+    want = true, wanting = true, wants = true,
+}
+
+local function HasRecentNegation(tokens, index)
+    for tokenIndex = math.max(1, index - 3), index - 1 do
+        local token = tokens[tokenIndex]
+        if token == "no" or token == "not" or token == "never" then
+            return true
+        end
+    end
+    return false
+end
+
+local function FindRecruitIntent(tokens)
+    for index, token in ipairs(tokens) do
+        if RECRUIT_INTENT_STARTERS[token]
+            and not HasRecentNegation(tokens, index)
+            and tokens[index + 1] == "to" then
+            -- Permit one adverb in constructions such as "plans to actively
+            -- recruit", while keeping the live-chat scan tightly bounded.
+            local targetEnd = math.min(#tokens, index + 3)
+            for targetIndex = index + 2, targetEnd do
+                if tokens[targetIndex] == "recruit" then
+                    return "recruitment intent"
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
 local function FindMemberSearchIntent(tokens)
     for index, token in ipairs(tokens) do
         local targetStart
@@ -130,13 +169,18 @@ function module:Evaluate(context)
         AddMatch(matches, "guild tag")
     end
 
+    local guild = HasAny(text, GUILD_TERMS)
     local recruit = HasAny(text, RECRUIT_PHRASES)
+    local recruitScore = 4
+    if not recruit and (hasGuildTag or guild) then
+        recruit = FindRecruitIntent(context.tokens or {})
+        if recruit then recruitScore = 5 end
+    end
     if recruit then
-        score = score + 4
+        score = score + recruitScore
         AddMatch(matches, recruit)
     end
 
-    local guild = HasAny(text, GUILD_TERMS)
     local memberSearch = HasAny(text, MEMBER_SEARCH_PHRASES)
     if not memberSearch and (hasGuildTag or guild) then
         memberSearch = FindMemberSearchIntent(context.tokens or {})
