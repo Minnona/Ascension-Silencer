@@ -3,7 +3,7 @@ local AS = AscensionSilencer
 local PAGE_WIDTH = 548
 local CARD_WIDTH = 532
 local REVIEW_ROW_HEIGHT = 22
-local REVIEW_VIEW_HEIGHT = 220
+local REVIEW_VIEW_HEIGHT = 320
 local REVIEW_VIEW_WIDTH = 540
 local REVIEW_ROW_WIDTH = 508
 local REVIEW_VISIBLE_ROWS = math.ceil(REVIEW_VIEW_HEIGHT / REVIEW_ROW_HEIGHT) + 2
@@ -498,6 +498,15 @@ function AS:BuildHygienePanel(panel)
     panel:SetScript("OnShow", function() AS:RefreshHygienePanel() end)
 end
 
+local function GetCopyableReviewMessage(message)
+    local text = tostring(message or "")
+    text = string.gsub(text, "|c%x%x%x%x%x%x%x%x", "")
+    text = string.gsub(text, "|r", "")
+    text = string.gsub(text, "|H.-|h(.-)|h", "%1")
+    text = string.gsub(text, "|T.-|t", "")
+    return text
+end
+
 local function BindReviewTooltip(row)
     if not row or row.asReviewTooltipBound then return end
     row.asReviewTooltipBound = true
@@ -511,6 +520,7 @@ local function BindReviewTooltip(row)
         GameTooltip:AddLine("Score: " .. tostring(entry.score) .. "/" .. tostring(entry.threshold), nil, nil, nil, true)
         GameTooltip:AddLine("Channel: " .. tostring(entry.channel), nil, nil, nil, true)
         GameTooltip:AddLine("Matched: " .. AS:FormatMatches(entry.matches), nil, nil, nil, true)
+        GameTooltip:AddLine("Click to copy the full message.", 0.45, 0.85, 1, true)
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(tostring(entry.message or ""), nil, nil, nil, true)
         GameTooltip:Show()
@@ -519,6 +529,61 @@ local function BindReviewTooltip(row)
     row:SetScript("OnLeave", function()
         if GameTooltip then GameTooltip:Hide() end
     end)
+end
+
+function AS:CreateReviewCopyPopup(parent)
+    if self.reviewCopyPopup then return end
+
+    local popup = CreateFrame("Frame", "AscensionSilencer_ReviewCopyPopup", parent)
+    popup:SetWidth(560)
+    popup:SetHeight(145)
+    popup:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
+    popup:SetFrameStrata("DIALOG")
+    popup:EnableMouse(true)
+    popup:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true,
+        tileSize = 32,
+        edgeSize = 32,
+        insets = { left = 8, right = 8, top = 8, bottom = 8 },
+    })
+    popup:SetBackdropColor(0, 0, 0, 0.96)
+
+    self:CreateText(popup, "Copy blocked message", 20, -18, 510, "GameFontNormalLarge")
+    self:CreateText(popup, "Press Ctrl+C to copy the highlighted text. Press Esc to close.", 20, -42, 510)
+
+    local editBox = self:CreateEditBox(popup, "AscensionSilencer_ReviewCopyText", 20, -66, 510)
+    editBox:SetMaxLetters(2048)
+    editBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+        popup:Hide()
+    end)
+
+    self:CreateButton(popup, "AscensionSilencer_ReviewCopyClose", "Close", 440, -104, 90, function()
+        popup:Hide()
+    end)
+
+    popup:SetScript("OnHide", function()
+        editBox:ClearFocus()
+    end)
+
+    self:RegisterSkinnable("panels", popup)
+    self:SkinPanel(popup)
+    popup.editBox = editBox
+    popup:Hide()
+    self.reviewCopyPopup = popup
+end
+
+function AS:ShowReviewCopyPopup(entry)
+    local popup = self.reviewCopyPopup
+    if not popup or not popup.editBox or not entry then return end
+
+    if GameTooltip then GameTooltip:Hide() end
+    popup:Show()
+    popup.editBox:SetText(GetCopyableReviewMessage(entry.message))
+    popup.editBox:SetFocus()
+    popup.editBox:HighlightText()
 end
 
 function AS:BuildReviewPanel(panel)
@@ -550,6 +615,8 @@ function AS:BuildReviewPanel(panel)
     self.reviewScroll = scroll
     self.reviewScrollChild = child
     self.reviewRows = {}
+    self.reviewFollowLatest = true
+    self.reviewLastHistoryRevision = tonumber(self.historyRevision) or 0
 
     for index = 1, REVIEW_VISIBLE_ROWS do
         local row = CreateFrame("Button", "AscensionSilencer_ReviewRow" .. index, child)
@@ -563,12 +630,16 @@ function AS:BuildReviewPanel(panel)
         row.text = text
 
         BindReviewTooltip(row)
+        row:SetScript("OnClick", function(self)
+            if self.reviewEntry then AS:ShowReviewCopyPopup(self.reviewEntry) end
+        end)
         self.reviewRows[index] = row
     end
 
     scroll:SetScript("OnVerticalScroll", function(self, offset)
         if self.asAdjusting then return end
         self:SetVerticalScroll(offset)
+        AS.reviewFollowLatest = (tonumber(offset) or 0) <= 0.5
         AS:RefreshReviewPanel()
     end)
     scroll:SetScript("OnMouseWheel", function(self, delta)
@@ -577,12 +648,16 @@ function AS:BuildReviewPanel(panel)
         local nextValue = current - (delta * REVIEW_ROW_HEIGHT * 3)
         if nextValue < 0 then nextValue = 0 end
         if nextValue > maximum then nextValue = maximum end
+        self.asAdjusting = true
         self:SetVerticalScroll(nextValue)
+        self.asAdjusting = false
+        AS.reviewFollowLatest = nextValue <= 0.5
         AS:RefreshReviewPanel()
     end)
 
     self:RegisterSkinnable("scrollframes", scroll)
     self:SkinScrollFrame(scroll)
+    self:CreateReviewCopyPopup(panel)
 
     y = y - REVIEW_VIEW_HEIGHT - 14
     self:CreateText(panel, "Test a message", 16, y, 560, "GameFontNormal")
@@ -613,10 +688,18 @@ function AS:BuildReviewPanel(panel)
     self.testResult:SetJustifyV("TOP")
 
     panel:SetScript("OnShow", function() AS:RefreshReviewPanel() end)
+    panel:SetScript("OnHide", function()
+        if AS.reviewCopyPopup then AS.reviewCopyPopup:Hide() end
+    end)
 end
 
 function AS:RefreshReviewPanel()
     local count = self:GetHistoryCount()
+    local historyRevision = tonumber(self.historyRevision) or 0
+    local previousRevision = tonumber(self.reviewLastHistoryRevision)
+    if previousRevision == nil then previousRevision = historyRevision end
+    local newEntries = math.max(0, historyRevision - previousRevision)
+    self.reviewLastHistoryRevision = historyRevision
 
     if self.reviewSummary then
         self.reviewSummary:SetText("Blocked this session: " .. tostring(self.sessionStats.total or 0) .. "   Stored for review: " .. tostring(count))
@@ -628,7 +711,20 @@ function AS:RefreshReviewPanel()
 
     local scrollOffset = self.reviewScroll and (self.reviewScroll:GetVerticalScroll() or 0) or 0
     local maximum = self.reviewScroll and (self.reviewScroll:GetVerticalScrollRange() or 0) or 0
-    if scrollOffset > maximum and self.reviewScroll then
+    if count == 0 and self.reviewScroll then
+        scrollOffset = 0
+        self.reviewFollowLatest = true
+        self.reviewScroll.asAdjusting = true
+        self.reviewScroll:SetVerticalScroll(0)
+        self.reviewScroll.asAdjusting = false
+    elseif newEntries > 0 and self.reviewFollowLatest == false and self.reviewScroll then
+        -- Newest entries are inserted at display index 1. Move the pixel offset
+        -- by the same number of rows so the message being inspected stays put.
+        scrollOffset = math.min(maximum, scrollOffset + (newEntries * REVIEW_ROW_HEIGHT))
+        self.reviewScroll.asAdjusting = true
+        self.reviewScroll:SetVerticalScroll(scrollOffset)
+        self.reviewScroll.asAdjusting = false
+    elseif scrollOffset > maximum and self.reviewScroll then
         self.reviewScroll.asAdjusting = true
         self.reviewScroll:SetVerticalScroll(maximum)
         self.reviewScroll.asAdjusting = false
@@ -654,11 +750,6 @@ function AS:RefreshReviewPanel()
         end
     end
 
-    if count == 0 and self.reviewScroll then
-        self.reviewScroll.asAdjusting = true
-        self.reviewScroll:SetVerticalScroll(0)
-        self.reviewScroll.asAdjusting = false
-    end
 end
 
 function AS:CreateOptionsPanel(name, parentName)

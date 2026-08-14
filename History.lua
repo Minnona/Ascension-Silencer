@@ -4,6 +4,7 @@ AS.history = {}
 AS.historyLimit = 100
 AS.historyCount = 0
 AS.historyNext = 1
+AS.historyRevision = 0
 
 function AS:GetHistoryCount()
     return tonumber(self.historyCount) or 0
@@ -39,6 +40,7 @@ function AS:AddBlockedMessage(entry)
     self.history[self.historyNext] = entry
     self.historyNext = (self.historyNext % limit) + 1
     self.historyCount = math.min(limit, self:GetHistoryCount() + 1)
+    self.historyRevision = (tonumber(self.historyRevision) or 0) + 1
 
     self.sessionStats.total = (self.sessionStats.total or 0) + 1
     self.sessionStats.byModule[entry.moduleKey] = (self.sessionStats.byModule[entry.moduleKey] or 0) + 1
@@ -49,6 +51,7 @@ function AS:ClearHistory()
     self.history = {}
     self.historyCount = 0
     self.historyNext = 1
+    self.historyRevision = (tonumber(self.historyRevision) or 0) + 1
     if self.RefreshReviewPanel then self:RefreshReviewPanel() end
 end
 
